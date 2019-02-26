@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-02-26 17:16:06
+ * @Last Modified time: 2019-02-26 19:56:25
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -145,6 +145,46 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
 
     this._bmap.centerAndZoom(new BMap.Point(centerPoint[0], centerPoint[1]), zoom);
     this._bmap.addControl(new BMap.NavigationControl());
+
+    this.ToolsInit();
+  }
+
+  //自定义工具栏初始化
+  MapClass.prototype.ToolsInit = function() {
+    var div = document.createElement('div');
+    div.className = "bhMap-tools";
+    div.oncontextmenu = function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    var html =
+      '<span class="move">\
+        <i class="iconfont bhMap-icon-shouzhi"></i>移动\
+      </span>\
+      <span class="ranging">\
+        <i class="iconfont bhMap-icon-ceju"></i>测距\
+      </span>\
+      <span class="mark">\
+        <i class="iconfont bhMap-icon-weizhibiaoji"></i>标记\
+      </span>\
+      <span class="area">\
+        <i class="iconfont bhMap-icon-zerenfanwei"></i>范围\
+      </span>\
+      <span class="way">\
+        <i class="iconfont bhMap-icon-icon-xian"></i>路线\
+      </span>';
+    var mapBox = document.getElementById(this.container);
+    var link = document.createElement('link');
+    var fontLink = document.createElement('link');
+    link.rel = "stylesheet";
+    link.href = "../css/bohuiMap.css";
+    fontLink.rel = "stylesheet";
+    fontLink.href = "../font/iconfont.css";
+
+    document.head.appendChild(link);
+    document.head.appendChild(fontLink);
+    div.innerHTML = html;
+    mapBox.appendChild(div);
   }
 
   //渲染地图
