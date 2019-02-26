@@ -1,4 +1,7 @@
 node_modules
 offlinemap/tiles/
+!offlinemap/tiles/readme.txt
 offlinemap/tiles_hybrid/
+!offlinemap/tiles_hybrid/readme.txt
 offlinemap/tiles_self/
+!offlinemap/tiles_self/readme.txt
