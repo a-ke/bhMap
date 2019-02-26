@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+    #mapDemo {
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="mapDemo"></div>
+  <script src="./js/bohuiMap.js"></script>
+  <script>
+    var map = bhLib.map;
+    map.render({
+      container: 'mapDemo',
+      isOnline: true,
+      // sourceRoot: 'http://172.17.36.33:10000/',
+      centerPoint: [116.404, 39.915],
+      zoomLevel: 13,
+      enabelScrollWheelZoom: true,
+      enabelKeyboard: true,
+      BMapAK: "f1f0cc97a81b411aa64b614d22b42420"
+    });
+    map.onReady(function() {
+      console.log('ready')
+      // console.log(this)
+      this.enableScrollWheelZoom(true);
+      this.enableKeyboard(false);
+    });
+  </script>
+</body>
+</html>
