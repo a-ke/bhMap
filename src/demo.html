@@ -26,26 +26,24 @@
   <script>
     bhLib.map.loadScript({
       isOnline: true,
-      // sourceRoot: '/offlinemap/',
+      // sourceRoot: '../offlinemap/',
       ak: "f1f0cc97a81b411aa64b614d22b42420"
     }, [
-      '/offlinemap/tools/DrawingManager_min.js',
-      '/offlinemap/tools/DistanceTool_min.js',
-      '/offlinemap/tools/EventWrapper.min.js'
+      '../offlinemap/tools/DrawingManager_min.js',
+      '../offlinemap/tools/DistanceTool_min.js',
+      '../offlinemap/tools/EventWrapper.min.js'
     ]);
     var map = bhLib.map.render({
       container: 'mapDemo',
       centerPoint: [116.404, 39.915],
-      zoomLevel: 13,
-      enabelScrollWheelZoom: true,
-      enabelKeyboard: true
+      zoomLevel: 13
     });
     map.onReady(function() {
       console.log('ready')
       // console.log(this)
       this.enableScrollWheelZoom(true);
       this.enableKeyboard(true);
-      this.enableMapTools();
+      this.enableMapTools(true);
       // this.enableMapTools(false);
     });
   </script>
