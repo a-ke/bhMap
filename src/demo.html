@@ -43,7 +43,12 @@
       // console.log(this)
       this.enableScrollWheelZoom(true);
       this.enableKeyboard(true);
-      this.enableMapTools(true);
+      this.enableMapTools(true, {
+        polylineOptions: {
+          strokeColor: 'red',
+          strokeOpacity: 0.2
+        }
+      });
       // this.enableMapTools(false);
     });
   </script>

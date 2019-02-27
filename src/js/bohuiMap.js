@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-02-27 17:50:48
+ * @Last Modified time: 2019-02-27 18:01:49
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -238,7 +238,13 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     if (!options) {
       throw new Error('工具条的设置参数错误');
     }
-
+    try {
+      this._polylineOptions.strokeWeight = setDefaultValue(options.polylineOptions.strokeWeight, this._polylineOptions.strokeWeight);
+      this._polylineOptions.strokeColor = setDefaultValue(options.polylineOptions.strokeColor, this._polylineOptions.strokeColor);
+      this._polylineOptions.strokeOpacity = setDefaultValue(options.polylineOptions.strokeOpacity, this._polylineOptions.strokeOpacity);
+    } catch (error) {
+      throw new Error("工具条的设置参数错误");
+    }
   }
 
   /**
