@@ -23,6 +23,19 @@ isOnline | boolean | 加载在线地图还是离线地图 | 是
 sourceRoot | string | 离线地图资源的根目录路径（当设置为离线地图时，该值是必须的） | 否
 urlList | array | 地图工具脚本的路径(如鼠标绘制工具库等) | 否
 
+例如：
+```js
+bhLib.map.loadScript({
+  isOnline: true,
+  // sourceRoot: '../offlinemap/',
+  ak: "f1f0cc97a81b411aa64b614d22b42420"
+}, [
+  '../offlinemap/tools/DrawingManager_min.js',
+  '../offlinemap/tools/DistanceTool_min.js',
+  '../offlinemap/tools/EventWrapper.min.js'
+]);
+```
+
 2. `bh.map.render(options)`
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -34,20 +47,52 @@ options.zoomLevel | number | 地图初始化的缩放级别（1~19）| 否 | 11
 
 返回值是地图的实例化对象，比如叫：myMap
 
-3. `myMap.enableScrollWheelZoom(flag)`
+例如：
+```js
+var myMap = bhLib.map.render({
+  container: 'mapDemo',
+  centerPoint: [116.404, 39.915],
+  zoomLevel: 13
+});
+```
+3. `myMap.onReady(callback)`
+
+参数 | 类型 | 说明 | 必选 | 默认值
+-- | -- | -- | -- | --
+callback | Function | 地图初始化完成后的回调函数 | 是 | -
+
+4. `myMap.enableScrollWheelZoom(flag)`
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 flag | boolean | 是否开启鼠标滚轮操作地图缩放 | 否 | true
 
-4. `myMap.enableKeyboard(flag)`
+5. `myMap.enableKeyboard(flag)`
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 flag | boolean | 是否开启键盘操作 | 否 | true
 
-5. `myMap.enableMapTools(flag, options)`
+6. `myMap.enableMapTools(flag, options)`
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 flag | boolean | 是否开启自定义工具条 | 是 | -
+options | Object | 工具条的配置项 | 否 | 详情见内部参数的默认值
+options.polylineOptions | Object | 折线的样式 | 否 | 详情见内部参数的默认值
+options.polylineOptions.strokeWeight | string | 折线的宽度(单位:px) | 否 | '8'
+options.polylineOptions.strokeColor | string | 折线的颜色 | 否 | '#333'
+options.polylineOptions.strokeOpacity | number | 折线的透明度 | 否 | 0.8
+
+```js
+myMap.enableMapTools(true, {
+  polylineOptions: {
+    strokeColor: 'red',
+    strokeOpacity: 0.2
+  }
+});
+```
+
+7. `myMap.setMapTools(options)`
+
+参数说明同 enableMapTools(flag, options) 方法中的options一样。
