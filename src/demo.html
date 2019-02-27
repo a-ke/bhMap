@@ -24,22 +24,29 @@
   <div id="mapDemo"></div>
   <script src="./js/bohuiMap.js"></script>
   <script>
-    var map = bhLib.map;
-    map.render({
-      container: 'mapDemo',
+    bhLib.map.loadScript({
       isOnline: true,
-      // sourceRoot: 'http://172.17.36.33:10000/',
+      // sourceRoot: '/offlinemap/',
+      ak: "f1f0cc97a81b411aa64b614d22b42420"
+    }, [
+      '/offlinemap/tools/DrawingManager_min.js',
+      '/offlinemap/tools/DistanceTool_min.js',
+      '/offlinemap/tools/EventWrapper.min.js'
+    ]);
+    var map = bhLib.map.render({
+      container: 'mapDemo',
       centerPoint: [116.404, 39.915],
       zoomLevel: 13,
       enabelScrollWheelZoom: true,
-      enabelKeyboard: true,
-      BMapAK: "f1f0cc97a81b411aa64b614d22b42420"
+      enabelKeyboard: true
     });
     map.onReady(function() {
       console.log('ready')
       // console.log(this)
       this.enableScrollWheelZoom(true);
-      this.enableKeyboard(false);
+      this.enableKeyboard(true);
+      this.enableMapTools();
+      // this.enableMapTools(false);
     });
   </script>
 </body>
