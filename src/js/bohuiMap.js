@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-02-27 18:01:49
+ * @Last Modified time: 2019-02-28 10:41:47
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -111,6 +111,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this.minZoom = 1; //地图的最小缩放级别
     this.enableScrollWheelZoom = null; //控制是否开启滚轮缩放的方法
     this.enableKeyboard = null; //控制是否开启键盘操作的方法
+    this.markerMap = {}; //地图中所有的标注点的集合
 
     this._bmap = null; //百度地图实例化对象
     this._defaultCursor = null; //地图的默认鼠标样式
@@ -437,6 +438,43 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * 自定义工具条结束
    * **************
    */
+
+  /**
+  * @desc 创建标记
+  * @param {Object} point {id: '1', title: 'title', lng: '111', lat: '111'}
+  * @returns {Object} Marker值
+  */
+  MapClass.prototype.createMarker = function(point) {
+    if (!point || !point.id) {
+      throw new Error('创建标记的参数不正确');
+    }
+    var labelFlag = point.label ? true : false; //是否需要加载label
+    var pt = new BMap.Point(point.lng, point.lat);
+    var marker = null;
+    if (labelFlag) {
+      var titleLabel = new BMap.Label(point.label.content, {
+        position: pt
+      });
+    }
+    if (point.icon) {
+      var width = setDefaultValue(point.icon.width, 19);
+      var height = setDefaultValue(point.icon.height, 25);
+      var icon = new BMap.Icon(point.icon.url, new BMap.Size(width, height));
+      marker = new BMap.Marker(pt, { icon });
+      labelFlag && titleLabel.setOffset(new BMap.Size(0, height));
+    } else {
+      marker = new BMap.Marker(pt);
+      labelFlag && titleLabel.setOffset(new BMap.Size(0, 25));
+    }
+    labelFlag && point.label.style && titleLabel.setStyle(point.label.style);
+    labelFlag && marker.setLabel(titleLabel);
+
+    this.markerMap[point.id] = marker;
+    this._bmap.addOverlay(marker);
+
+    return marker;
+  }
+
 
   /**
    * @desc 渲染地图
