@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-02-28 13:15:30
+ * @Last Modified time: 2019-02-28 13:49:54
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -301,7 +301,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       var pointArr = overlay.getPath();
       var pois = [];
       that._bmap.removeOverlay(overlay);
-      pointArr.forEach(current => {
+      pointArr.forEach(function(current) {
         pois.push(new BMap.Point(current.lng, current.lat));
       });
       var polyline = new BMap.Polyline(pois, that._polylineOptions);
@@ -355,7 +355,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       var overlays = that._bmap.getOverlays();
       // vm.circle = overlays;
       overlays.map(function(item) {
-        let distance = that._bmap.getDistance(item.point, center);
+        var distance = that._bmap.getDistance(item.point, center);
         if (distance > radius) {
           item.hide();
         } else {
@@ -384,8 +384,8 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         myLabel.setPosition(point);
 
         var overlays = that._bmap.getOverlays();
-        overlays.map(item => {
-          let distance = that._bmap.getDistance(item.point, center);
+        overlays.map(function(item) {
+          var distance = that._bmap.getDistance(item.point, center);
           if (distance > radius) {
             item.hide();
           } else {
@@ -460,7 +460,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       var width = setDefaultValue(point.icon.width, 19);
       var height = setDefaultValue(point.icon.height, 25);
       var icon = new BMap.Icon(point.icon.url, new BMap.Size(width, height));
-      marker = new BMap.Marker(pt, { icon });
+      marker = new BMap.Marker(pt, { icon: icon });
       labelFlag && titleLabel.setOffset(new BMap.Size(0, height));
     } else {
       marker = new BMap.Marker(pt);
@@ -492,7 +492,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       weight = '8';
       opacity = 0.8
     }
-    line.list.forEach(current => {
+    line.list.forEach(function(current) {
       pois.push(new BMap.Point(current.lng, current.lat));
     });
     var polyline = new BMap.Polyline(pois, {
