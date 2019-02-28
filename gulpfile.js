@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-25 19:03:32
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-02-26 10:59:52
+ * @Last Modified time: 2019-02-28 14:02:38
  *
  * @description: gulp配置文件
  * npm run build 运行打包
@@ -12,6 +12,8 @@ const uglify = require("gulp-uglify");
 const rename = require("gulp-rename");
 const gutil = require('gulp-util'); // 打印日志 log
 const clean = require('gulp-clean'); // 清空文件夹
+const autoprefixer = require('gulp-autoprefixer');
+const cleanCSS = require('gulp-clean-css');
 
 const produ_src = "dist"; //发布的路径
 
@@ -21,10 +23,16 @@ gulp.task("copyjs", function() {
     .pipe(gulp.dest(produ_src + "/js"));
 });
 
-//赋值html文件
+//复制html文件
 gulp.task("copyHtml", function() {
   return gulp.src('src/*.html')
     .pipe(gulp.dest(produ_src));
+});
+
+//复制font文件
+gulp.task("copyFont", function() {
+  return gulp.src("src/font/*")
+    .pipe(gulp.dest(produ_src + "/font"));
 });
 
 //压缩js文件
@@ -34,8 +42,25 @@ gulp.task("min", function () {
       suffix: '.min'
     }))
     .pipe(uglify()) //2. 压缩文件
-    .on('error', gutil.log)
+    .on('error', function(err) {
+      gutil.log(gutil.colors.red('[Error]', err.toString()));
+    })
     .pipe(gulp.dest(produ_src + "/js")); //3.另存压缩后的文件
+});
+
+//处理css文件
+gulp.task("css", function() {
+  return gulp.src("src/css/*.css")
+    .pipe(autoprefixer({
+      browsers: ['last 10 versions'],
+      cascade: false
+    }))
+    .pipe(gulp.dest(produ_src + "/css"))
+    .pipe(cleanCSS({compatibility: 'ie8'}))
+    .pipe(rename({
+      suffix: '.min'
+    }))
+    .pipe(gulp.dest(produ_src + "/css"));
 });
 
 //清空dist文件夹
@@ -44,4 +69,4 @@ gulp.task("clean", function () {
     .pipe(clean());
 });
 
-gulp.task("build", gulp.series('clean', 'copyjs', 'copyHtml', 'min'));
+gulp.task("build", gulp.series('clean', 'copyjs', 'copyHtml', 'copyFont', 'min', 'css'));

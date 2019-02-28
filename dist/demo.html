@@ -1,12 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+    #mapDemo {
+      height: 100%;
+    }
+  </style>
 </head>
 <body>
-  <script src="./js/main.js"></script>
+  <div id="mapDemo"></div>
+  <script src="./js/bohuiMap.js"></script>
+  <script>
+    bhLib.map.loadScript({
+      isOnline: true,
+      // sourceRoot: '../offlinemap/',
+      ak: "f1f0cc97a81b411aa64b614d22b42420"
+    }, [
+      '../offlinemap/tools/DrawingManager_min.js',
+      '../offlinemap/tools/DistanceTool_min.js',
+      '../offlinemap/tools/EventWrapper.min.js'
+    ]);
+    var map = bhLib.map.render({
+      container: 'mapDemo',
+      centerPoint: [116.404, 39.915],
+      zoomLevel: 13
+    });
+    map.onReady(function() {
+      console.log('ready')
+      // console.log(this)
+      this.enableScrollWheelZoom(true);
+      this.enableKeyboard(true);
+      this.enableMapTools(true, {
+        polylineOptions: {
+          strokeColor: 'red',
+          strokeOpacity: 0.2
+        }
+      });
+      // this.enableMapTools(false);
+      this.createMarker({
+        id: '1',
+        lng: '116.394415',
+        lat: '39.928411',
+        icon: {
+          url: '../offlinemap/images/Mario.png',
+          width: 32,
+          height: 32
+        },
+        label: {
+          content: '测试',
+          style: {
+            border: 'none',
+            background: 'transparent'
+          }
+        }
+      });
+
+      this.createPolyline({
+        list: [{lng: 116.296778, lat: 39.951073}, {lng: 116.377266, lat: 39.941337}, {lng: 116.358294, lat: 39.888431}],
+        options: {
+          strokeColor: 'red',
+          strokeWeight: '8',
+          strokeOpacity: 0.3
+        }
+      });
+    });
+  </script>
 </body>
 </html>
