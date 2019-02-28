@@ -16,6 +16,7 @@
 备注： 使用案例见dist目录下的demo.html
 
 1. `bh.map.loadScript({isOnline, sourceRoot}, urlList)`
+设置加载在线地图还是离线地图，同时加载必要的脚本文件
 
 参数 | 类型 | 说明 | 必选
 -- | -- | -- | --
@@ -37,6 +38,7 @@ bhLib.map.loadScript({
 ```
 
 2. `bh.map.render(options)`
+渲染地图的函数，options是地图初始化的基本参数
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
@@ -56,28 +58,32 @@ var myMap = bhLib.map.render({
 });
 ```
 3. `myMap.onReady(callback)`
+地图初始化完成的回调函数
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 callback | Function | 地图初始化完成后的回调函数 | 是 | -
 
 4. `myMap.enableScrollWheelZoom(flag)`
+控制是否开启鼠标滚轮缩放
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 flag | boolean | 是否开启鼠标滚轮操作地图缩放 | 否 | true
 
 5. `myMap.enableKeyboard(flag)`
+控制是否开启键盘操作（上、下、左、右来移动地图）
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 flag | boolean | 是否开启键盘操作 | 否 | true
 
 6. `myMap.enableMapTools(flag, options)`
+控制是否开启地图内置工具条，options是工具条的一些设置
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
-flag | boolean | 是否开启自定义工具条 | 是 | -
+flag | boolean | 是否开启内置工具条 | 是 | -
 options | Object | 工具条的配置项 | 否 | 详情见内部参数的默认值
 options.polylineOptions | Object | 折线的样式 | 否 | 详情见内部参数的默认值
 options.polylineOptions.strokeWeight | string | 折线的宽度(单位:px) | 否 | '8'
@@ -94,5 +100,43 @@ myMap.enableMapTools(true, {
 ```
 
 7. `myMap.setMapTools(options)`
+设置工具条上功能的配置
 
 参数说明同 enableMapTools(flag, options) 方法中的options一样。
+
+8. `myMap.createMarker(param)`
+创建标记点
+
+参数 | 类型 | 说明 | 必选 | 默认值
+-- | -- | -- | -- | --
+param | Object | 标点的信息 | 是 | -
+param. id | String或者Number | 标点的唯一标识 | 是 | -
+param.lng | Number | 标点的经度 | 是 | -
+param.lat | Number | 标点的纬度 | 是 | -
+param.icon | Object | 标点的图标信息 | 否 | null
+param.icon.url | String | 标点图标的图片地址 | 是 | -
+param.icon.width | Number | 标点图标的宽度（单位:px） | 否 | 19
+param.icon.height | Number | 标点图标的高度（单位:px） | 否 | 25
+param.label | Object | 标点的标题信息 | 否 | null
+param.label.content | String | 标点标题的文字 | 是 | -
+param.label.style | Object | 标点标题的样式 | 否 | -
+
+```js
+myMap.createMarker({
+  id: '1',
+  lng: '116.394415',
+  lat: '39.928411',
+  icon: {
+    url: '../offlinemap/images/Mario.png',
+    width: 32,
+    height: 32
+  },
+  label: {
+    content: '测试',
+    style: {
+      border: 'none',
+      background: 'transparent'
+    }
+  }
+});
+```
