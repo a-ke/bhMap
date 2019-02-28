@@ -15,7 +15,7 @@
 ## 使用说明
 备注： 使用案例见dist目录下的demo.html
 
-1. `bh.map.loadScript({isOnline, sourceRoot}, urlList)`
+1. bh.map.loadScript({isOnline, sourceRoot}, urlList)
 设置加载在线地图还是离线地图，同时加载必要的脚本文件
 
 参数 | 类型 | 说明 | 必选
@@ -37,7 +37,7 @@ bhLib.map.loadScript({
 ]);
 ```
 
-2. `bh.map.render(options)`
+2. bh.map.render(options)
 渲染地图的函数，options是地图初始化的基本参数
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -57,28 +57,28 @@ var myMap = bhLib.map.render({
   zoomLevel: 13
 });
 ```
-3. `myMap.onReady(callback)`
+3. myMap.onReady(callback)
 地图初始化完成的回调函数
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 callback | Function | 地图初始化完成后的回调函数 | 是 | -
 
-4. `myMap.enableScrollWheelZoom(flag)`
+4. myMap.enableScrollWheelZoom(flag)
 控制是否开启鼠标滚轮缩放
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 flag | boolean | 是否开启鼠标滚轮操作地图缩放 | 否 | true
 
-5. `myMap.enableKeyboard(flag)`
+5. myMap.enableKeyboard(flag)
 控制是否开启键盘操作（上、下、左、右来移动地图）
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 flag | boolean | 是否开启键盘操作 | 否 | true
 
-6. `myMap.enableMapTools(flag, options)`
+6. myMap.enableMapTools(flag, options)
 控制是否开启地图内置工具条，options是工具条的一些设置
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -99,12 +99,12 @@ myMap.enableMapTools(true, {
 });
 ```
 
-7. `myMap.setMapTools(options)`
+7. myMap.setMapTools(options)
 设置工具条上功能的配置
 
 参数说明同 enableMapTools(flag, options) 方法中的options一样。
 
-8. `myMap.createMarker(param)`
+8. myMap.createMarker(param)
 创建标记点
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -137,6 +137,31 @@ myMap.createMarker({
       border: 'none',
       background: 'transparent'
     }
+  }
+});
+```
+
+9. myMap.createPolyline(line)
+创建折线
+
+参数 | 类型 | 说明 | 必选 | 默认值
+-- | -- | -- | -- | --
+line | Object | 折线的信息 | 是 | -
+line.list | Array | 折线的点数组 | 是 | -
+line.list[i].lng | Number | 经度 | 是 | -
+line.list[i].lat | Number | 纬度 | 是 | -
+line.options | Object | 线条的设置项 | 否 | -
+line.options.strokeColor | String | 线条的颜色 | 否 | '#333'
+line.options.strokeWeight | String | 线条的粗细 | 否 | '8'
+line.options.strokeOpacity | Number | 线条的透明度 | 否 | 0.8
+
+```js
+myMap.createPolyline({
+  list: [{lng: 116.296778, lat: 39.951073}, {lng: 116.377266, lat: 39.941337}, {lng: 116.358294, lat: 39.888431}],
+  options: {
+    strokeColor: 'red',
+    strokeWeight: '8',
+    strokeOpacity: 0.3
   }
 });
 ```
