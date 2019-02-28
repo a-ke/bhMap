@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-02-28 10:41:47
+ * @Last Modified time: 2019-02-28 13:15:30
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -473,6 +473,37 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this._bmap.addOverlay(marker);
 
     return marker;
+  }
+
+  /**
+   * @desc 创建折线
+   * @param {Object} line {list: [{lng: 116, lat:39}], options: {strokeColor: "#333", strokeWeight: '8', strokeOpacity: 0.8}}
+   * @returns {Object} polyline值
+   */
+  MapClass.prototype.createPolyline = function(line) {
+    var pois = [];
+    var color, weight, opacity;
+    try {
+      color = setDefaultValue(line.options.strokeColor, '#333');
+      weight = setDefaultValue(line.options.strokeWeight, '8');
+      opacity = setDefaultValue(line.options.strokeOpacity, 0.8);
+    } catch (error) {
+      color = '#333';
+      weight = '8';
+      opacity = 0.8
+    }
+    line.list.forEach(current => {
+      pois.push(new BMap.Point(current.lng, current.lat));
+    });
+    var polyline = new BMap.Polyline(pois, {
+      enableEditing: false, //是否启用线编辑，默认为false
+      enableClicking: true, //是否响应点击事件，默认为true
+      strokeWeight: weight, //折线的宽度，以像素为单位
+      strokeOpacity: opacity, //折线的透明度，取值范围0 - 1
+      strokeColor: color //折线颜色
+    });
+    this._bmap.addOverlay(polyline);
+    return polyline;
   }
 
 
