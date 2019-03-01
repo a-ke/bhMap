@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-02-28 13:49:54
+ * @Last Modified time: 2019-03-01 13:59:23
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -13,6 +13,12 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   var BMapScriptLoaded = false; //百度地图的主脚本是否加载完毕
   var BMapToolsScriptLoaded = {}; //百度地图工具脚本是否加载完毕
   var _event = new Event(); //事件实例
+
+  //获取正在执行的js路径
+  var scripts = document.getElementsByTagName("script");
+  var JS__FILE__ = scripts[scripts.length - 1].getAttribute("src");
+  var jsDir = JS__FILE__.substr(0, JS__FILE__.lastIndexOf("/")+1)
+
 
   /**
    * 判断给定的参数是否为对象
@@ -90,7 +96,8 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       for (var i = 0, handle; handle = this._eventMap[e][i]; i++) {
         handle();
       }
-    } catch (error) {
+    }catch(error) {
+      throw error;
     }
   }
 
@@ -112,6 +119,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this.enableScrollWheelZoom = null; //控制是否开启滚轮缩放的方法
     this.enableKeyboard = null; //控制是否开启键盘操作的方法
     this.markerMap = {}; //地图中所有的标注点的集合
+    this.markerClusterOptions = null; //点聚合的配置项
 
     this._bmap = null; //百度地图实例化对象
     this._defaultCursor = null; //地图的默认鼠标样式
@@ -125,11 +133,16 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       circle: null,
       label: null
     }; //保存圆形区域过滤的圆形，保证此圆形的唯一性
+    this._markerCluster = null; //点聚合对象
   }
 
   //地图脚本准备完毕之后的回调
   MapClass.prototype._onScriptReady = function(callback) {
-    _event.on('onScriptReady', callback); //执行插件内部的初始化函数
+    try {
+      _event.on('onScriptReady', callback); //执行插件内部的初始化函数
+    } catch (error) {
+      throw error;
+    }
   }
 
   //地图初始化完成的回调
@@ -154,6 +167,15 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
 
     this._bmap.centerAndZoom(new BMap.Point(centerPoint[0], centerPoint[1]), zoom);
     // this._bmap.addControl(new BMap.NavigationControl());
+
+    if (this.markerClusterOptions && this.markerClusterOptions.enable) {
+      //开启点聚合
+      try {
+        this._enableMarkerCluster(this.markerClusterOptions.options);
+      } catch (error) {
+        throw error
+      }
+    }
 
     this._drawManagerInit();
     _event.emit('onReady');
@@ -197,9 +219,9 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     var link = document.createElement('link');
     var fontLink = document.createElement('link');
     link.rel = "stylesheet";
-    link.href = "./css/bohuiMap.css";
+    link.href = jsDir + "../css/bohuiMap.css";
     fontLink.rel = "stylesheet";
-    fontLink.href = "./font/iconfont.css";
+    fontLink.href = jsDir + "../font/iconfont.css";
 
     document.head.appendChild(link);
     document.head.appendChild(fontLink);
@@ -355,7 +377,11 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       var overlays = that._bmap.getOverlays();
       // vm.circle = overlays;
       overlays.map(function(item) {
-        var distance = that._bmap.getDistance(item.point, center);
+        var point = item.point;
+        if (item instanceof BMapLib.TextIconOverlay) {
+          point = item._position;
+        }
+        var distance = that._bmap.getDistance(point, center);
         if (distance > radius) {
           item.hide();
         } else {
@@ -374,24 +400,25 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       circle.enableEditing();
 
       // 拖动圆触发
-      circle.addEventListener("lineupdate", function(e) {
-        radius = circle.getRadius();
-        r = radius.toFixed(2);
-        center = circle.getCenter();
-        bounds = circle.getBounds().getNorthEast();
-        point = new BMap.Point(bounds.lng, center.lat);
-        myLabel.setContent(r + "m");
-        myLabel.setPosition(point);
+      circle.addEventListener("lineupdate", that._reFilter.bind(that));
 
-        var overlays = that._bmap.getOverlays();
-        overlays.map(function(item) {
-          var distance = that._bmap.getDistance(item.point, center);
-          if (distance > radius) {
-            item.hide();
-          } else {
-            item.show();
-          }
+      //地图移动结束后重新过滤
+      // that._bmap.addEventListener("moveend", that._reFilter.bind(that));
+      var moveEnd = BMapLib.EventWrapper.addListener(that._bmap, 'moveend', that._reFilter.bind(that));
+
+      //地图缩放后重新过滤
+      // that._bmap.addEventListener("zoomend", that._reFilter.bind(that));
+      var zoomEnd = BMapLib.EventWrapper.addListener(that._bmap, 'zoomend', that._reFilter.bind(that));
+
+      //圆形区域删除后删除事件
+      circle.addEventListener("remove", function() {
+        that._filterCircle.circle = null;
+        that._filterCircle.label = null;
+        that._bmap.getOverlays().map(function(item) {
+          item.show();
         });
+        BMapLib.EventWrapper.removeListener(moveEnd);
+        BMapLib.EventWrapper.removeListener(zoomEnd);
       });
 
       //创建右键菜单
@@ -399,9 +426,6 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         circle.disableEditing();
         that._bmap.removeOverlay(circle);
         that._bmap.removeOverlay(myLabel);
-        overlays.map(function(item) {
-          item.show();
-        });
       };
       var circleFilterMenu = new BMap.ContextMenu();
       circleFilterMenu.addItem(
@@ -414,6 +438,40 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       // this.ptInCircle(overlay.point, overlay.xa);
       that._bmap.panTo(center);
     });
+  }
+
+  /**
+   * @desc 重新对标点或聚合点进行过滤
+   */
+  MapClass.prototype._reFilter = function() {
+    var that = this;
+    try {
+      var circle = this._filterCircle.circle;
+      var radius = circle.getRadius();
+      var r = radius.toFixed(2);
+      var center = circle.getCenter();
+      var bounds = circle.getBounds().getNorthEast();
+      var point = new BMap.Point(bounds.lng, center.lat);
+      var myLabel = this._filterCircle.label;
+      myLabel.setContent(r + "m");
+      myLabel.setPosition(point);
+
+      var overlays = this._bmap.getOverlays();
+      overlays.map(function(item) {
+        var overlaysPoint = item.point;
+        if (item instanceof BMapLib.TextIconOverlay) {
+          overlaysPoint = item._position;
+        }
+        var distance = that._bmap.getDistance(overlaysPoint, center);
+        if (distance > radius) {
+          item.hide();
+        } else {
+          item.show();
+        }
+      });
+      myLabel.show();
+    } catch (error) {
+    }
   }
 
   /**
@@ -445,7 +503,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   * @returns {Object} Marker值
   */
   MapClass.prototype.createMarker = function(point) {
-    if (!point || !point.id) {
+    if (!point || point.id === undefined || point.id === null) {
       throw new Error('创建标记的参数不正确');
     }
     var labelFlag = point.label ? true : false; //是否需要加载label
@@ -470,7 +528,12 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     labelFlag && marker.setLabel(titleLabel);
 
     this.markerMap[point.id] = marker;
-    this._bmap.addOverlay(marker);
+    if (this._markerCluster) {
+      //开启了点聚合
+      this._markerCluster.addMarker(marker);
+    } else {
+      this._bmap.addOverlay(marker);
+    }
 
     return marker;
   }
@@ -506,6 +569,20 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     return polyline;
   }
 
+  /**
+   * @desc 开启点聚合功能
+   * @param {Object} options {markers: [], gridSize: 60, maxZoom: 5, minClusterSize: 2, isAverangeCenter: false, styles: []}
+   */
+  MapClass.prototype._enableMarkerCluster = function(options) {
+    !options && (options = {});
+    if (!BMapLib || !BMapLib.MarkerClusterer) {
+      throw new Error("缺少MarkerClusterer的js文件");
+    }
+    if (!BMapLib || !BMapLib.TextIconOverlay) {
+      throw new Error("缺少TextIconOverlay的js文件");
+    }
+    this._markerCluster = new BMapLib.MarkerClusterer(this._bmap, options);
+  }
 
   /**
    * @desc 渲染地图
@@ -515,13 +592,14 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       options = {};
     }
     if (!isObject(options)) {
-      throw new Error("options must be an object");
+      throw new Error("reader函数的参数必须是个对象");
     }
     this.container = options.container;
     this.centerPoint = setDefaultValue(options.centerPoint, [116.404, 39.915]);
     this.zoomLevel = setDefaultValue(options.zoomLevel, 11);
     this.maxZoom = setDefaultValue(options.maxZoom, 19);
     this.minZoom = setDefaultValue(options.minZoom, 11);
+    this.markerClusterOptions = setDefaultValue(options.markerClusterSetting, null);
 
     this._onScriptReady(this._init.bind(this));
 
@@ -603,7 +681,11 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     map.loadScript = loadMapMainScript;
     map.render = function(options) {
       var _innerMap = new MapClass();
-      _innerMap._render(options);
+      try {
+        _innerMap._render(options);
+      } catch (error) {
+        throw error;
+      }
       return _innerMap;
     };
   }
