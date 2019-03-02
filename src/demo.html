@@ -35,6 +35,9 @@
       'http://api.map.baidu.com/library/TextIconOverlay/1.2/src/TextIconOverlay.js',
       'http://api.map.baidu.com/library/MarkerClusterer/1.2/src/MarkerClusterer.js'
     ]);
+    bhLib.map.onAllScriptLoaded(function() {
+      console.log('scriptLoaded');
+    });
     var map = bhLib.map.render({
       container: 'mapDemo',
       centerPoint: [116.404, 39.915],

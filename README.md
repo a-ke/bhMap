@@ -46,7 +46,11 @@ bhLib.map.loadScript({
 ]);
 ```
 
-### 2. bh.map.render(options)
+### 2. bh.map.onAllScriptLoaded(callback)
+loadScript函数中所有的脚本加载完毕的回调<br/>
+在这里可以重写脚本中的一些方法
+
+### 3. bh.map.render(options)
 渲染地图的函数，options是地图初始化的基本参数
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -87,28 +91,28 @@ var myMap = bhLib.map.render({
   }
 });
 ```
-### 3. myMap.onReady(callback)
+### 4. myMap.onReady(callback)
 地图初始化完成的回调函数
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 callback | Function | 地图初始化完成后的回调函数 | 是 | -
 
-### 4. myMap.enableScrollWheelZoom(flag)
+### 5. myMap.enableScrollWheelZoom(flag)
 控制是否开启鼠标滚轮缩放
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 flag | boolean | 是否开启鼠标滚轮操作地图缩放 | 否 | true
 
-### 5. myMap.enableKeyboard(flag)
+### 6. myMap.enableKeyboard(flag)
 控制是否开启键盘操作（上、下、左、右来移动地图）
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
 flag | boolean | 是否开启键盘操作 | 否 | true
 
-### 6. myMap.enableMapTools(flag, options)
+### 7. myMap.enableMapTools(flag, options)
 控制是否开启地图内置工具条，options是工具条的一些设置
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -129,12 +133,12 @@ myMap.enableMapTools(true, {
 });
 ```
 
-### 7. myMap.setMapTools(options)
+### 8. myMap.setMapTools(options)
 设置工具条上功能的配置
 
 参数说明同 enableMapTools(flag, options) 方法中的options一样。
 
-### 8. myMap.createMarker(param)
+### 9. myMap.createMarker(param)
 创建标记点
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -171,7 +175,7 @@ myMap.createMarker({
 });
 ```
 
-### 9. myMap.createPolyline(line)
+### 10. myMap.createPolyline(line)
 创建折线
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -196,7 +200,7 @@ myMap.createPolyline({
 });
 ```
 
-### 10. 替换聚合点图片的方式说明
+### 11. 替换聚合点图片的方式说明
 > 因为聚合点在地图移动和缩放时会进行重绘，所以聚合点的图片只能通过其所有的marker点来计算。
 * 首先一定要将clickExpand属性设为false
 * 其次要设置聚合的options中的styles参数，如果不设置则styles数组中为默认图片

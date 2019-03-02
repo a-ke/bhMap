@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-02 10:18:18
+ * @Last Modified time: 2019-03-02 11:19:19
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -374,7 +374,11 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   //地图脚本准备完毕之后的回调
   MapClass.prototype._onScriptReady = function (callback) {
     try {
-      _event.on('onScriptReady', callback); //执行插件内部的初始化函数
+      if (isScriptReady()) {
+        callback();
+      } else {
+        _event.on('onScriptReady', callback); //执行插件内部的初始化函数
+      }
     } catch (error) {
       throw error;
     }
@@ -930,14 +934,6 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
 
     this._onScriptReady(this._init.bind(this));
 
-    // 等待地图脚本都准备完毕
-    (function loop() {
-      if (isScriptReady()) {
-        _event.emit('onScriptReady');
-        return;
-      }
-      setTimeout(loop, 300);
-    })();
   }
 
 
@@ -964,6 +960,15 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         _event.emit('mapMainScriptLoaded'); //加载工具脚本
       });
     }
+
+    // 等待地图脚本都准备完毕
+    (function loop() {
+      if (isScriptReady()) {
+        _event.emit('onScriptReady');
+        return;
+      }
+      setTimeout(loop, 300);
+    })();
   }
 
   /**
@@ -1015,6 +1020,9 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       }
       return _innerMap;
     };
+    map.onAllScriptLoaded = function(callback) {
+      _event.on('onScriptReady', callback);
+    }
   }
   init();
 
