@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-02 15:18:30
+ * @Last Modified time: 2019-03-02 15:57:05
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -85,6 +85,26 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   Event.prototype.on = function (e, callback) {
     this._eventMap[e] || (this._eventMap[e] = []);
     this._eventMap[e].push(callback);
+  }
+
+  /**
+   * 解绑事件
+   * @param {String} e 事件名称
+   * @param {Function} callback 要解绑的事件函数
+   */
+  Event.prototype.off = function(e, callback) {
+    if (!this._eventMap[e]) return;
+    var index = this._eventMap[e].indexOf(callback);
+    this._eventMap[e].splice(index, 1);
+  }
+
+  /**
+   * 清空事件的回调
+   * @param {String} e 事件名称
+   */
+  Event.prototype.clean = function(e) {
+    if (!this._eventMap[e]) return;
+    delete this._eventMap[e];
   }
 
   /**
