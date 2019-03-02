@@ -64,11 +64,11 @@ options.markerClusterSetting.options | Object | 点聚合的设置项 | 否 | {}
 
 **options.markerClusterSetting.options**<br>
 可选参数，可选项包括：
-markers {Array} 要聚合的标记数组
-gridSize {Number} 聚合计算时网格的像素大小，默认60
-maxZoom {Number} 最大的聚合级别，大于该级别就不进行相应的聚合
-minClusterSize {Number} 最小的聚合数量，小于该数量的不能成为一个聚合，默认为2
-isAverangeCenter {Boolean} 聚合点的落脚位置是否是所有聚合在内点的平均值，默认为否，落脚在聚合内的第一个点
+markers {Array} 要聚合的标记数组<br/>
+gridSize {Number} 聚合计算时网格的像素大小，默认60<br/>
+maxZoom {Number} 最大的聚合级别，大于该级别就不进行相应的聚合<br/>
+minClusterSize {Number} 最小的聚合数量，小于该数量的不能成为一个聚合，默认为2<br/>
+isAverangeCenter {Boolean} 聚合点的落脚位置是否是所有聚合在内点的平均值，默认为否，落脚在聚合内的第一个点<br/>
 styles {Array} 自定义聚合后的图标风格，请参考TextIconOverlay类
 
 **返回值是地图的实例化对象，比如叫：myMap**
