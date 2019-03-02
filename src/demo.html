@@ -100,6 +100,18 @@
         }
       });
 
+
+      this.onClusterClick(function(cluster) {
+        // console.log(cluster);
+        var html =
+          '<div style="width: 200px; height: 300px;background:#333;border: 1px solid red;color: #fff">自定义覆盖物</div>';
+        var temp = [cluster._center.lng, cluster._center.lat];
+        var overlay = map.createCustomOverlay(temp, html);
+        setTimeout(function() {
+          overlay.remove();
+        }, 3000);
+      });
+
     });
   </script>
 </body>

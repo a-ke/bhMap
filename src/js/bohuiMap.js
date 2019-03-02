@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-02 11:19:19
+ * @Last Modified time: 2019-03-02 15:18:30
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -93,8 +93,10 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    */
   Event.prototype.emit = function (e) {
     try {
+      var temp = Array.prototype.slice.call(arguments, 1);
       for (var i = 0, handle; handle = this._eventMap[e][i]; i++) {
-        handle();
+        // handle();
+        handle.apply(null, temp);
       }
     } catch (error) {
       throw error;
@@ -342,6 +344,50 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   }
   // ********************* 重写聚合点的类(end) ***************
 
+  // ********************* 自定义覆盖物类(start) ***************
+
+  /**
+   * @desc 生成自定义覆盖物的类
+   */
+  function createCustomOverlayClass() {
+    function CustomOverlay(map, point, html) {
+      this._map = map;
+      this._point = new BMap.Point(point[0], point[1]);
+      this._html = html;
+    }
+
+    CustomOverlay.prototype = new BMap.Overlay();
+
+    CustomOverlay.prototype.initialize = function() {
+      var div = this._div =  document.createElement("div");
+      div.style.position = "absolute";
+      div.style.zIndex = BMap.Overlay.getZIndex(this._point.lat);
+      div.style.minWidth = "20px";
+      div.style.minHeight = "20px";
+      div.innerHTML = this._html;
+
+      this._map.getPanes().floatPane.appendChild(div);
+
+      this._map.addEventListener('zoomend', this.draw.bind(this));
+
+      return div;
+    }
+
+    CustomOverlay.prototype.draw = function() {
+      var map = this._map;
+      var pixel = map.pointToOverlayPixel(this._point);
+      this._div.style.left = pixel.x + 10 +  "px";
+      this._div.style.top  = pixel.y - 10 + "px";
+    }
+
+    CustomOverlay.prototype.remove = function() {
+      this._div.parentElement.removeChild(this._div);
+    }
+
+    return CustomOverlay;
+  }
+
+  // ********************* 自定义覆盖物类(end) ***************
 
   //地图的类
   function MapClass() {
@@ -369,6 +415,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       label: null
     }; //保存圆形区域过滤的圆形，保证此圆形的唯一性
     this._markerCluster = null; //点聚合对象
+    this._CumtomOverlay = null; //自定义覆盖物类(在脚本加载完毕后初始化)
   }
 
   //地图脚本准备完毕之后的回调
@@ -408,6 +455,8 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_BOTTOM_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL});
     this._bmap.addControl(top_right_navigation);
     // this._bmap.addControl(new BMap.NavigationControl());
+
+    this._CumtomOverlay = createCustomOverlayClass();
 
     if (this.markerClusterOptions && this.markerClusterOptions.enable) {
       //开启点聚合
@@ -856,6 +905,9 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     } catch (error) {}
   }
 
+  /**
+   * @desc 重写MarkerClusterer类的原型上的一些方法
+   */
   MapClass.prototype._rewriteMarkerClusterer = function (Cluster) {
     try {
       var MarkerClusterer = BMapLib.MarkerClusterer;
@@ -881,7 +933,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
           (function (cluster) {
             cluster._clusterMarker.onclick = function (e) { //在每个聚合点对象的视图对象上绑定事件
               //这样就可以为每一个聚合点绑定点击事件了
-              console.log(cluster)
+              _event.emit('clusterClick', cluster);
             };
           })(cluster);
         }
@@ -906,14 +958,30 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
           (function (cluster) {
             cluster._clusterMarker.onclick = function (e) { //在每个聚合点对象的视图对象上绑定事件
               //这样就可以为每一个聚合点绑定点击事件了
-              console.log(cluster)
+              _event.emit('clusterClick', cluster);
             };
           })(cluster);
         }
       };
     } catch (error) {}
   }
+
+  /**
+   * @desc 聚合点的点击事件
+   */
+  MapClass.prototype.onClusterClick = function(callback) {
+    _event.on('clusterClick', callback);
+  }
   // ************* 聚合点定制化(end) ***************
+
+  /**
+   * @desc 创建自定义覆盖物
+   */
+  MapClass.prototype.createCustomOverlay = function(point, html) {
+    var customOverlay = new this._CumtomOverlay(this._bmap, point, html);
+    this._bmap.addOverlay(customOverlay);
+    return customOverlay;
+  }
 
   /**
    * @desc 渲染地图

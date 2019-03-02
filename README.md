@@ -209,4 +209,19 @@ myMap.createPolyline({
 ```js
 myMap.markerMap[0].clusterImageIndex = 2;
 myMap._markerCluster._redraw();
-````
+```
+
+### 12. myMap.onClusterClick(callback)
+聚合点的点击事件
+
+### 13. myMap.createCustomOverlay(point, html)
+创建地图自定义覆盖物
+
+参数 | 类型 | 说明 | 必选 | 默认值
+-- | -- | -- | -- | --
+point | Array | 覆盖物的坐标 | 是 | -
+point[0] | Number | 经度 | 是 | -
+point[1] | Number | 纬度 | 是 | -
+html | String | 覆盖物内部的html | 是 | -
+
+返回值：自定义覆盖物对象，该对象上提供一个remove()方法，可以通过该方法删除该覆盖物
