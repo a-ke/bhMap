@@ -29,14 +29,22 @@
       // sourceRoot: '../offlinemap/',
       ak: "f1f0cc97a81b411aa64b614d22b42420"
     }, [
-      '../offlinemap/tools/DrawingManager_min.js',
-      '../offlinemap/tools/DistanceTool_min.js',
-      '../offlinemap/tools/EventWrapper.min.js'
+      'http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.js',
+      'http://api.map.baidu.com/library/DistanceTool/1.2/src/DistanceTool_min.js',
+      'http://api.map.baidu.com/library/EventWrapper/1.2/src/EventWrapper.min.js',
+      'http://api.map.baidu.com/library/TextIconOverlay/1.2/src/TextIconOverlay.js',
+      'http://api.map.baidu.com/library/MarkerClusterer/1.2/src/MarkerClusterer.js'
     ]);
     var map = bhLib.map.render({
       container: 'mapDemo',
       centerPoint: [116.404, 39.915],
-      zoomLevel: 13
+      zoomLevel: 5,
+      maxZoom: 19,
+      minZoom: 1,
+      markerClusterSetting: {
+        enable: true,
+        clickExpand: false
+      }
     });
     map.onReady(function() {
       console.log('ready')
@@ -50,23 +58,35 @@
         }
       });
       // this.enableMapTools(false);
-      this.createMarker({
-        id: '1',
-        lng: '116.394415',
-        lat: '39.928411',
-        icon: {
-          url: '../offlinemap/images/Mario.png',
-          width: 32,
-          height: 32
-        },
-        label: {
-          content: '测试',
-          style: {
-            border: 'none',
-            background: 'transparent'
-          }
-        }
-      });
+      // this.createMarker({
+      //   id: '1',
+      //   lng: '116.394415',
+      //   lat: '39.928411',
+      //   icon: {
+      //     url: '../offlinemap/images/Mario.png',
+      //     width: 32,
+      //     height: 32
+      //   },
+      //   label: {
+      //     content: '测试',
+      //     style: {
+      //       border: 'none',
+      //       background: 'transparent'
+      //     }
+      //   }
+      // });
+      for (var i = 0; i < 500; i++) {
+        this.createMarker({
+          id: i,
+          lng: Math.random() * 40 + 85,
+          lat: Math.random() * 30 + 21
+        }).clusterImageIndex = 1;
+      }
+
+      setTimeout(function() {
+        map.markerMap[0].clusterImageIndex = 2;
+        map._markerCluster._redraw();
+      }, 3000);
 
       this.createPolyline({
         list: [{lng: 116.296778, lat: 39.951073}, {lng: 116.377266, lat: 39.941337}, {lng: 116.358294, lat: 39.888431}],
@@ -76,6 +96,7 @@
           strokeOpacity: 0.3
         }
       });
+
     });
   </script>
 </body>
