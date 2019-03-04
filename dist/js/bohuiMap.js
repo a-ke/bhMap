@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-04 16:41:53
+ * @Last Modified time: 2019-03-04 17:21:06
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -370,10 +370,11 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * @desc 生成自定义覆盖物的类
    */
   function createCustomOverlayClass() {
-    function CustomOverlay(map, point, html) {
+    function CustomOverlay(map, point, html, offset) {
       this._map = map;
       this._point = new BMap.Point(point[0], point[1]);
       this._html = html;
+      this._offset = offset || {};
     }
 
     CustomOverlay.prototype = new BMap.Overlay();
@@ -396,8 +397,12 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     CustomOverlay.prototype.draw = function() {
       var map = this._map;
       var pixel = map.pointToOverlayPixel(this._point);
-      this._div.style.left = pixel.x + 10 +  "px";
-      this._div.style.top  = pixel.y - 10 + "px";
+      var left = setDefaultValue(this._offset.left, 0);
+      var top = setDefaultValue(this._offset.top, -20);
+      var transform = setDefaultValue(this._offset.transform, 'translate(-50%, -100%)');
+      this._div.style.left = pixel.x + left + "px";
+      this._div.style.top = pixel.y + top + "px";
+      this._div.style.transform = transform;
     }
 
     CustomOverlay.prototype.remove = function() {
@@ -1048,8 +1053,8 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 创建自定义覆盖物
    */
-  MapClass.prototype.createCustomOverlay = function(point, html) {
-    var customOverlay = new this._CumtomOverlay(this._bmap, point, html);
+  MapClass.prototype.createCustomOverlay = function(point, html, offset) {
+    var customOverlay = new this._CumtomOverlay(this._bmap, point, html, offset);
     this._bmap.addOverlay(customOverlay);
     return customOverlay;
   }
