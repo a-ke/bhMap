@@ -77,7 +77,7 @@
       this.changeMapStyle("midnight"); //在线地图更换皮肤
       // this.changeMapStyle("tiles_self"); //离线地图更换皮肤
 
-      // this.enableMapTools(false);
+      this.enableMapTools(false);
       // this.createMarker({
       //   id: '1',
       //   lng: '116.394415',
@@ -100,11 +100,12 @@
           id: i,
           lng: Math.random() * 40 + 85,
           lat: Math.random() * 30 + 21
-        }).clusterImageIndex = 1;
+        }).clusterImageIndex = 0;
       }
 
       setTimeout(function() {
         map.markerMap[0].clusterImageIndex = 2;
+        map.markerMap[1].clusterImageIndex = 1;
         map._markerCluster._redraw();
       }, 3000);
 
