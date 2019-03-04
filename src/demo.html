@@ -100,9 +100,7 @@
         }
       });
 
-
-      this.onClusterClick(function(cluster) {
-        // console.log(cluster);
+      this.addEventListener('clusterClick', function(cluster) {
         var html =
           '<div style="width: 200px; height: 300px;background:#333;border: 1px solid red;color: #fff">自定义覆盖物</div>';
         var temp = [cluster._center.lng, cluster._center.lat];
@@ -110,6 +108,10 @@
         setTimeout(function() {
           overlay.remove();
         }, 3000);
+      });
+
+      this.addEventListener('markercomplete', function(marker) {
+        console.log(marker)
       });
 
     });

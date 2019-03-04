@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-02 15:57:05
+ * @Last Modified time: 2019-03-04 13:08:57
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -453,7 +453,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
 
   //地图初始化完成的回调
   MapClass.prototype.onReady = function (callback) {
-    _event.on('onReady', callback.bind(this)); //执行外部的回调
+    _event.on('ready', callback.bind(this)); //执行外部的回调
   }
 
   /**
@@ -488,7 +488,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     }
 
     this._drawManagerInit();
-    _event.emit('onReady');
+    _event.emit('ready');
   }
 
   /**
@@ -647,6 +647,14 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         new BMap.MenuItem("删除", removePolyline.bind(polyline))
       );
       polyline.addContextMenu(polylineMenu);
+    });
+
+    this._drawingManagerObject.addEventListener("markercomplete", function(e, marker) {
+      _event.emit("markercomplete", marker);
+    });
+
+    this._drawingManagerObject.addEventListener("polylinecomplete", function(polyline) {
+      _event.emit("polylinecomplete", polyline);
     });
   }
 
@@ -1003,6 +1011,25 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     return customOverlay;
   }
 
+  /**
+   * @desc 自定义事件
+   * @param {String} e 事件名称
+   * @param {Function} callback 事件触发的回调函数
+   * @returns void
+   */
+  MapClass.prototype.addEventListener = function(e, callback) {
+    _event.on(e, callback);
+  }
+
+  /**
+   * @desc 解除事件绑定
+   * @param {String} e 事件名称
+   * @param {Function} callback 要解绑的事件回调函数
+   *@return void
+   */
+  MapClass.prototype.removeEventListener = function(e, callback) {
+    _event.off(e, callback);
+  }
   /**
    * @desc 渲染地图
    */

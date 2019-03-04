@@ -47,7 +47,7 @@ bhLib.map.loadScript({
 ```
 
 ### 2. bh.map.onAllScriptLoaded(callback)
-loadScript函数中所有的脚本加载完毕的回调<br/>
+loadScript函数中所有的脚本加载完毕的回调，在onReady回调之前<br/>
 在这里可以重写脚本中的一些方法
 
 ### 3. bh.map.render(options)
@@ -211,10 +211,7 @@ myMap.markerMap[0].clusterImageIndex = 2;
 myMap._markerCluster._redraw();
 ```
 
-### 12. myMap.onClusterClick(callback)
-聚合点的点击事件
-
-### 13. myMap.createCustomOverlay(point, html)
+### 12. myMap.createCustomOverlay(point, html)
 创建地图自定义覆盖物
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -224,4 +221,16 @@ point[0] | Number | 经度 | 是 | -
 point[1] | Number | 纬度 | 是 | -
 html | String | 覆盖物内部的html | 是 | -
 
-返回值：自定义覆盖物对象，该对象上提供一个remove()方法，可以通过该方法删除该覆盖物
+返回值：自定义覆盖物对象，该对象上提供一个remove()方法，可以通过该方法删除该覆盖物。同时该对象继承于[Overlay类](http://lbsyun.baidu.com/cms/jsapi/reference/jsapi_reference.html#a3b0)，具备Overlay上的一切方法。
+
+### 13. myMap.addEventListener(event, callback)
+添加事件监听函数
+
+事件 | 参数 | 描述
+-- | -- | --
+clusterClick | cluster | 开启点聚合功能并且关闭点击展开，点击聚合点时会触发此事件
+markercomplete | marker | 工具条上绘制标点完成的回调函数
+polylinecomplete | polyline | 工具条上绘制折线完成的回调函数
+
+### 14. myMap.removeEventListener(event, callback)
+移除某个事件监听函数
