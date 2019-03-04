@@ -17,19 +17,23 @@ var scripts = document.getElementsByTagName("script");
 // var JS__FILE__ = scripts[scripts.length - 1].getAttribute("src");
 // offmapcfg.home = JS__FILE__.substr(0, JS__FILE__.lastIndexOf("/")+1); //地图API主目录
 offmapcfg.home = mapSourceRoot;
+offmapcfg.state = [];
 (function(){
   window.BMap_loadScriptTime = (new Date).getTime();
   //加载地图API主文件
-  var script = document.createElement('script');
-  script.src = offmapcfg.home+'/map.js?v=2.1';
-  document.body.appendChild(script);
+  offmapcfg.state.push(false);
+  bhLib.dom.loadScript(offmapcfg.home + '/map.js?v=2.1', function() {
+    offmapcfg.state[0] = true;
+  });
   //加载扩展函数
-  script = document.createElement('script');
-  script.src = offmapcfg.home+'/map_plus.js?v=2.1';
-  document.body.appendChild(script);
+  offmapcfg.state.push(false);
+  bhLib.dom.loadScript(offmapcfg.home + '/map_plus.js?v=2.1', function() {
+    offmapcfg.state[1] = true;
+  });
   //加载城市坐标
-  script = document.createElement('script');
-  script.src = offmapcfg.home+'/map_city.js?v=2.1';
-  document.body.appendChild(script);
+  offmapcfg.state.push(false);
+  bhLib.dom.loadScript(offmapcfg.home + '/map_city.js?v=2.1', function() {
+    offmapcfg.state[2] = true;
+  });
 })();
 ///////////////////////////////////////////////////////////////////

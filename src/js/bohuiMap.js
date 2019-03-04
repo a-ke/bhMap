@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-04 14:18:53
+ * @Last Modified time: 2019-03-04 15:19:58
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -459,7 +459,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 地图的初始化方法
    */
-  MapClass.prototype._init = function () {
+  MapClass.prototype._init = function (isOnline) {
     var el = this.container;
     var centerPoint = this.centerPoint;
     var zoom = this.zoomLevel;
@@ -470,6 +470,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this.enableScrollWheelZoom = this._bmap.enableScrollWheelZoom.bind(this._bmap);
     this.enableKeyboard = this._bmap.enableKeyboard.bind(this._bmap);
     this._defaultCursor = this._bmap.getDefaultCursor();
+    this.isOnline = isOnline;
 
     this._bmap.centerAndZoom(new BMap.Point(centerPoint[0], centerPoint[1]), zoom);
     var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_BOTTOM_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL});
@@ -1002,12 +1003,6 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     } catch (error) {}
   }
 
-  /**
-   * @desc 聚合点的点击事件
-   */
-  MapClass.prototype.onClusterClick = function(callback) {
-    _event.on('clusterClick', callback);
-  }
   // ************* 聚合点定制化(end) ***************
 
   /**
@@ -1017,6 +1012,27 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     var customOverlay = new this._CumtomOverlay(this._bmap, point, html);
     this._bmap.addOverlay(customOverlay);
     return customOverlay;
+  }
+
+  /**
+   * 更换地图的皮肤
+   * @param {String} str 在线地图传皮肤的名称，具体名称见http://lbsyun.baidu.com/jsdemo.htm#k0_2
+   *                     离线地图传入皮肤瓦片的文件夹名称
+   * @returns void
+   */
+  MapClass.prototype.changeMapStyle = function(str) {
+    if (this.isOnline) {
+      this._bmap.setMapStyle({style: str});
+    } else {
+      var tileLayer = new BMap.TileLayer(); //创建一个地图图层实例
+      tileLayer.getTilesUrl = function(tileCoord, zoom) { //向地图返回地图图块的网址
+        var x = tileCoord.x;
+        var y = tileCoord.y;
+        var tdir = offmapcfg.tiles_self.length > 0 ? offmapcfg.tiles_self : offmapcfg.home + str;
+        return tdir + '/' + zoom + '/' + x + '/' + y + offmapcfg.imgext;
+      }
+      this._bmap.addTileLayer(tileLayer);
+    }
   }
 
   /**
@@ -1079,15 +1095,21 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       }
       window.mapSourceRoot = options.sourceRoot;
       dom.loadScript(options.sourceRoot + '/map_load.js', function () {
-        BMapScriptLoaded = true;
-        _event.emit('mapMainScriptLoaded'); //加载工具脚本
+        (function loop() {
+          if (offmapcfg.state && offmapcfg.state.indexOf(false) == -1) {
+            BMapScriptLoaded = true;
+            _event.emit('mapMainScriptLoaded'); //加载工具脚本
+            return;
+          }
+          setTimeout(loop, 300);
+        })();
       });
     }
 
     // 等待地图脚本都准备完毕
     (function loop() {
       if (isScriptReady()) {
-        _event.emit('onScriptReady');
+        _event.emit('onScriptReady', options.isOnline);
         return;
       }
       setTimeout(loop, 300);
