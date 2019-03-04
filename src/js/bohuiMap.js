@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-04 15:19:58
+ * @Last Modified time: 2019-03-04 16:41:53
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -420,6 +420,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this.enableScrollWheelZoom = null; //控制是否开启滚轮缩放的方法
     this.enableKeyboard = null; //控制是否开启键盘操作的方法
     this.markerMap = {}; //地图中所有的标注点的集合
+    this.markerPointArr = []; //地图上所有的标注点的point数组
     this.markerClusterOptions = null; //点聚合的配置项
 
     this._bmap = null; //百度地图实例化对象
@@ -473,8 +474,8 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this.isOnline = isOnline;
 
     this._bmap.centerAndZoom(new BMap.Point(centerPoint[0], centerPoint[1]), zoom);
-    var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_BOTTOM_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL});
-    this._bmap.addControl(top_right_navigation);
+    // var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_BOTTOM_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL});
+    // this._bmap.addControl(top_right_navigation);
     // this._bmap.addControl(new BMap.NavigationControl());
 
     this._CumtomOverlay = createCustomOverlayClass();
@@ -489,7 +490,54 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     }
 
     this._drawManagerInit();
+    this._navigationControlInit();
     _event.emit('ready');
+  }
+
+  /**
+   * 导航控制栏初始化
+   */
+  MapClass.prototype._navigationControlInit = function() {
+    var div = document.createElement('div');
+    div.className = "bhMap-navigation";
+    var html =
+      '<span id="bhMapBestView" title="最佳视野">\
+        <i class="iconfont icon-bhMap-quanjing"></i>\
+      </span>\
+      <span id="bhMapZoomIn" title="放大一级">\
+        <i class="iconfont icon-bhMap-fangda"></i>\
+      </span>\
+      <span id="bhMapZoomOut" title="缩小一级">\
+        <i class="iconfont icon-bhMap-suoxiao"></i>\
+      </span>';
+    var mapBox = document.getElementById(this.container);
+    div.innerHTML = html;
+    mapBox.appendChild(div);
+
+
+    this._navigationControlEventInit();
+  }
+
+  /**
+   * 导航控制栏事件初始化
+   */
+  MapClass.prototype._navigationControlEventInit = function() {
+    var that = this;
+    var bestViewBtn = document.getElementById('bhMapBestView');
+    var zoomInBtn = document.getElementById('bhMapZoomIn');
+    var zoomOutBtn = document.getElementById('bhMapZoomOut');
+
+    bestViewBtn.addEventListener('click', function() {
+      that._bmap.setViewport(that.markerPointArr);
+    });
+
+    zoomInBtn.addEventListener('click', function() {
+      that._bmap.zoomIn();
+    });
+
+    zoomOutBtn.addEventListener('click', function() {
+      that._bmap.zoomOut();
+    });
   }
 
   /**
@@ -512,30 +560,21 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     };
     var html =
       '<span id="bhMapToolsMove" class="move">\
-        <i class="iconfont bhMap-icon-shouzhi"></i>移动\
+        <i class="iconfont icon-bhMap-yidong"></i>移动\
       </span>\
       <span id="bhMapToolsRanging" class="ranging">\
-        <i class="iconfont bhMap-icon-ceju"></i>测距\
+        <i class="iconfont icon-bhMap-ceju"></i>测距\
       </span>\
       <span id="bhMapToolsMark" class="mark">\
-        <i class="iconfont bhMap-icon-weizhibiaoji"></i>标记\
+        <i class="iconfont icon-bhMap-biaoji"></i>标记\
       </span>\
       <span id="bhMapToolsArea" class="area">\
-        <i class="iconfont bhMap-icon-zerenfanwei"></i>范围\
+        <i class="iconfont icon-bhMap-fangwei"></i>范围\
       </span>\
       <span id="bhMapToolsPolyline" class="way">\
-        <i class="iconfont bhMap-icon-icon-xian"></i>路线\
+        <i class="iconfont icon-bhMap-zhexian"></i>折线\
       </span>';
     var mapBox = document.getElementById(this.container);
-    var link = document.createElement('link');
-    var fontLink = document.createElement('link');
-    link.rel = "stylesheet";
-    link.href = jsDir + "../css/bohuiMap.css";
-    fontLink.rel = "stylesheet";
-    fontLink.href = jsDir + "../font/iconfont.css";
-
-    document.head.appendChild(link);
-    document.head.appendChild(fontLink);
     div.innerHTML = html;
     mapBox.appendChild(div);
     this._toolsEventInit();
@@ -835,6 +874,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     var labelFlag = point.label ? true : false; //是否需要加载label
     var pt = new BMap.Point(point.lng, point.lat);
     var marker = null;
+    this.markerPointArr.push(pt);
     if (labelFlag) {
       var titleLabel = new BMap.Label(point.label.content, {
         position: pt
@@ -1083,6 +1123,16 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    */
   function loadMapMainScript(options, toolsList) {
     loadToolsScript(toolsList); //加载工具脚本
+
+    var link = document.createElement('link');
+    var fontLink = document.createElement('link');
+    link.rel = "stylesheet";
+    link.href = jsDir + "../css/bohuiMap.css";
+    fontLink.rel = "stylesheet";
+    fontLink.href = jsDir + "../font/iconfont.css";
+    document.head.appendChild(link);
+    document.head.appendChild(fontLink);
+
     if (options.isOnline) {
       window.BMap_loadScriptTime = (new Date).getTime();
       dom.loadScript('http://api.map.baidu.com/getscript?v=2.0&ak=' + options.ak, function () {

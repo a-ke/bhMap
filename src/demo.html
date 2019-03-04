@@ -54,7 +54,7 @@
     var map = bhLib.map.render({
       container: 'mapDemo',
       centerPoint: [116.404, 39.915],
-      zoomLevel: 5,
+      zoomLevel: 13,
       maxZoom: 19,
       minZoom: 1,
       markerClusterSetting: {
@@ -95,7 +95,7 @@
       //     }
       //   }
       // });
-      for (var i = 0; i < 500; i++) {
+      for (var i = 0; i < 100; i++) {
         this.createMarker({
           id: i,
           lng: Math.random() * 40 + 85,
@@ -116,6 +116,7 @@
           strokeOpacity: 0.3
         }
       });
+      this._bmap.setViewport(this.markerPointArr);
 
       this.addEventListener('clusterClick', function(cluster) {
         var html =

@@ -23,3 +23,29 @@
   font-size: 24px;
   vertical-align: sub;
 }
+
+.bhMap-navigation {
+  position: absolute;
+  right: 10px;
+  bottom: 40px;
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0px 0px 2px 1px #aaa;
+}
+
+.bhMap-navigation span {
+  display: block;
+  padding: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.bhMap-navigation span + span {
+  border-top: 1px solid #999;
+}
+
+.bhMap-navigation span:hover {
+  color: #1e70ad;
+}
+.bhMap-navigation span i {
+  font-size: 24px;
+}
