@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-04 13:08:57
+ * @Last Modified time: 2019-03-04 14:18:53
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -680,6 +680,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this._bmap.removeOverlay(this._filterCircle.label);
     this._bmap.removeOverlay(this._filterCircle.circle);
     this._bmap.getOverlays().map(function (item) {
+      if (item instanceof BMap.Label) return;
       item.show();
     });
 
@@ -698,6 +699,9 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         var point = item.point;
         if (item instanceof BMapLib.TextIconOverlay) {
           point = item._position;
+        }
+        if (item instanceof BMap.Label) {
+          return;
         }
         var distance = that._bmap.getDistance(point, center);
         if (distance > radius) {
@@ -733,6 +737,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         that._filterCircle.circle = null;
         that._filterCircle.label = null;
         that._bmap.getOverlays().map(function (item) {
+          if (item instanceof BMap.Label) return;
           item.show();
         });
         BMapLib.EventWrapper.removeListener(moveEnd);
@@ -779,6 +784,9 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         var overlaysPoint = item.point;
         if (item instanceof BMapLib.TextIconOverlay) {
           overlaysPoint = item._position;
+        }
+        if (item instanceof BMap.Label) {
+          return;
         }
         var distance = that._bmap.getDistance(overlaysPoint, center);
         if (distance > radius) {
