@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-01 13:59:23
+ * @Last Modified time: 2019-03-04 13:08:57
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -17,7 +17,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   //获取正在执行的js路径
   var scripts = document.getElementsByTagName("script");
   var JS__FILE__ = scripts[scripts.length - 1].getAttribute("src");
-  var jsDir = JS__FILE__.substr(0, JS__FILE__.lastIndexOf("/")+1)
+  var jsDir = JS__FILE__.substr(0, JS__FILE__.lastIndexOf("/") + 1)
 
 
   /**
@@ -34,7 +34,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * @param {*} param
    * @return {boolean} 如果是数组返回true，否则返回false
    */
-  var isArray = function(param) {
+  var isArray = function (param) {
     return '[object Array]' === Object.prototype.toString.call(param);
   }
 
@@ -44,7 +44,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * @param {*} def
    * @return {*} 返回最终值
    */
-  var setDefaultValue = function(value, def) {
+  var setDefaultValue = function (value, def) {
     return value === undefined ? def : value;
   }
 
@@ -82,21 +82,43 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * @param {string} e 事件名称
    * @param {Function} callback 事件的回调函数
    */
-  Event.prototype.on = function(e, callback) {
+  Event.prototype.on = function (e, callback) {
     this._eventMap[e] || (this._eventMap[e] = []);
     this._eventMap[e].push(callback);
+  }
+
+  /**
+   * 解绑事件
+   * @param {String} e 事件名称
+   * @param {Function} callback 要解绑的事件函数
+   */
+  Event.prototype.off = function(e, callback) {
+    if (!this._eventMap[e]) return;
+    var index = this._eventMap[e].indexOf(callback);
+    this._eventMap[e].splice(index, 1);
+  }
+
+  /**
+   * 清空事件的回调
+   * @param {String} e 事件名称
+   */
+  Event.prototype.clean = function(e) {
+    if (!this._eventMap[e]) return;
+    delete this._eventMap[e];
   }
 
   /**
    * 触发相应的事件
    * @param {String} e 事件名称
    */
-  Event.prototype.emit = function(e) {
+  Event.prototype.emit = function (e) {
     try {
+      var temp = Array.prototype.slice.call(arguments, 1);
       for (var i = 0, handle; handle = this._eventMap[e][i]; i++) {
-        handle();
+        // handle();
+        handle.apply(null, temp);
       }
-    }catch(error) {
+    } catch (error) {
       throw error;
     }
   }
@@ -107,6 +129,285 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * *******************
    */
 
+  // ********************* 重写聚合点的类(start) ***************
+
+  function rewriteCluster() {
+    /**
+     * 获取一个扩展的视图范围，把上下左右都扩大一样的像素值。
+     * @param {Map} map BMap.Map的实例化对象
+     * @param {BMap.Bounds} bounds BMap.Bounds的实例化对象
+     * @param {Number} gridSize 要扩大的像素值
+     *
+     * @return {BMap.Bounds} 返回扩大后的视图范围。
+     */
+    var getExtendedBounds = function (map, bounds, gridSize) {
+      bounds = cutBoundsInRange(bounds);
+      var pixelNE = map.pointToPixel(bounds.getNorthEast());
+      var pixelSW = map.pointToPixel(bounds.getSouthWest());
+      pixelNE.x += gridSize;
+      pixelNE.y -= gridSize;
+      pixelSW.x -= gridSize;
+      pixelSW.y += gridSize;
+      var newNE = map.pixelToPoint(pixelNE);
+      var newSW = map.pixelToPoint(pixelSW);
+      return new BMap.Bounds(newSW, newNE);
+    };
+
+    /**
+     * 按照百度地图支持的世界范围对bounds进行边界处理
+     * @param {BMap.Bounds} bounds BMap.Bounds的实例化对象
+     *
+     * @return {BMap.Bounds} 返回不越界的视图范围
+     */
+    var cutBoundsInRange = function (bounds) {
+      var maxX = getRange(bounds.getNorthEast().lng, -180, 180);
+      var minX = getRange(bounds.getSouthWest().lng, -180, 180);
+      var maxY = getRange(bounds.getNorthEast().lat, -74, 74);
+      var minY = getRange(bounds.getSouthWest().lat, -74, 74);
+      return new BMap.Bounds(new BMap.Point(minX, minY), new BMap.Point(maxX, maxY));
+    };
+
+    /**
+     * 对单个值进行边界处理。
+     * @param {Number} i 要处理的数值
+     * @param {Number} min 下边界值
+     * @param {Number} max 上边界值
+     *
+     * @return {Number} 返回不越界的数值
+     */
+    var getRange = function (i, mix, max) {
+      mix && (i = Math.max(i, mix));
+      max && (i = Math.min(i, max));
+      return i;
+    };
+
+    /**
+     * @ignore
+     * Cluster
+     * @class 表示一个聚合对象，该聚合，包含有N个标记，这N个标记组成的范围，并有予以显示在Map上的TextIconOverlay等。
+     * @constructor
+     * @param {MarkerClusterer} markerClusterer 一个标记聚合器示例。
+     */
+    function Cluster(markerClusterer) {
+      this._markerClusterer = markerClusterer;
+      this._map = markerClusterer.getMap();
+      this._minClusterSize = markerClusterer.getMinClusterSize();
+      this._isAverageCenter = markerClusterer.isAverageCenter();
+      this._center = null; //落脚位置
+      this._markers = []; //这个Cluster中所包含的markers
+      this._gridBounds = null; //以中心点为准，向四边扩大gridSize个像素的范围，也即网格范围
+      this._isReal = false; //真的是个聚合
+
+      this._clusterMarker = new BMapLib.TextIconOverlay(this._center, this._markers.length, {
+        "styles": this._markerClusterer.getStyles(),
+        "clusterImageIndex": this._getImageIndex()
+      });
+      //this._map.addOverlay(this._clusterMarker);
+    }
+
+    /**
+     * 获取聚合点的图片在styles中的下标
+     */
+    Cluster.prototype._getImageIndex = function() {
+      var index = 0;
+      for(var i = 0, marker; marker = this._markers[i]; i++) {
+        if (marker.clusterImageIndex === undefined) marker.clusterImageIndex = 0;
+        if (marker.clusterImageIndex > index) {
+          index = marker.clusterImageIndex
+        }
+      }
+      return index;
+    }
+
+    /**
+     * 向该聚合添加一个标记。
+     * @param {Marker} marker 要添加的标记。
+     * @return 无返回值。
+     */
+    Cluster.prototype.addMarker = function (marker) {
+      if (this.isMarkerInCluster(marker)) {
+        return false;
+      } //也可用marker.isInCluster判断,外面判断OK，这里基本不会命中
+
+      if (!this._center) {
+        this._center = marker.getPosition();
+        this.updateGridBounds(); //
+      } else {
+        if (this._isAverageCenter) {
+          var l = this._markers.length + 1;
+          var lat = (this._center.lat * (l - 1) + marker.getPosition().lat) / l;
+          var lng = (this._center.lng * (l - 1) + marker.getPosition().lng) / l;
+          this._center = new BMap.Point(lng, lat);
+          this.updateGridBounds();
+        } //计算新的Center
+      }
+
+      marker.isInCluster = true;
+      this._markers.push(marker);
+
+      var len = this._markers.length;
+      if (len < this._minClusterSize) {
+        this._map.addOverlay(marker);
+        //this.updateClusterMarker();
+        return true;
+      } else if (len === this._minClusterSize) {
+        for (var i = 0; i < len; i++) {
+          this._markers[i].getMap() && this._map.removeOverlay(this._markers[i]);
+        }
+
+      }
+      this._map.addOverlay(this._clusterMarker);
+      this._isReal = true;
+      this.updateClusterMarker();
+      return true;
+    };
+
+    /**
+     * 判断一个标记是否在该聚合中。
+     * @param {Marker} marker 要判断的标记。
+     * @return {Boolean} true或false。
+     */
+    Cluster.prototype.isMarkerInCluster = function (marker) {
+      if (this._markers.indexOf) {
+        return this._markers.indexOf(marker) != -1;
+      } else {
+        for (var i = 0, m; m = this._markers[i]; i++) {
+          if (m === marker) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    /**
+     * 判断一个标记是否在该聚合网格范围中。
+     * @param {Marker} marker 要判断的标记。
+     * @return {Boolean} true或false。
+     */
+    Cluster.prototype.isMarkerInClusterBounds = function (marker) {
+      return this._gridBounds.containsPoint(marker.getPosition());
+    };
+
+    Cluster.prototype.isReal = function (marker) {
+      return this._isReal;
+    };
+
+    /**
+     * 更新该聚合的网格范围。
+     * @return 无返回值。
+     */
+    Cluster.prototype.updateGridBounds = function () {
+      var bounds = new BMap.Bounds(this._center, this._center);
+      this._gridBounds = getExtendedBounds(this._map, bounds, this._markerClusterer.getGridSize());
+    };
+
+    /**
+     * 更新该聚合的显示样式，也即TextIconOverlay。
+     * @return 无返回值。
+     */
+    Cluster.prototype.updateClusterMarker = function () {
+      if (this._map.getZoom() > this._markerClusterer.getMaxZoom()) {
+        this._clusterMarker && this._map.removeOverlay(this._clusterMarker);
+        for (var i = 0, marker; marker = this._markers[i]; i++) {
+          this._map.addOverlay(marker);
+        }
+        return;
+      }
+
+      if (this._markers.length < this._minClusterSize) {
+        this._clusterMarker.hide();
+        return;
+      }
+
+      this._clusterMarker.setPosition(this._center);
+
+      this._clusterMarker.setText(this._markers.length);
+
+      this._clusterMarker.setImageIndex(this._getImageIndex());
+    };
+
+    /**
+     * 删除该聚合。
+     * @return 无返回值。
+     */
+    Cluster.prototype.remove = function () {
+      for (var i = 0, m; m = this._markers[i]; i++) {
+        this._markers[i].getMap() && this._map.removeOverlay(this._markers[i]);
+      } //清除散的标记点
+      this._map.removeOverlay(this._clusterMarker);
+      this._markers.length = 0;
+      delete this._markers;
+    }
+
+    /**
+     * 获取该聚合所包含的所有标记的最小外接矩形的范围。
+     * @return {BMap.Bounds} 计算出的范围。
+     */
+    Cluster.prototype.getBounds = function () {
+      var bounds = new BMap.Bounds(this._center, this._center);
+      for (var i = 0, marker; marker = this._markers[i]; i++) {
+        bounds.extend(marker.getPosition());
+      }
+      return bounds;
+    };
+
+    /**
+     * 获取该聚合的落脚点。
+     * @return {BMap.Point} 该聚合的落脚点。
+     */
+    Cluster.prototype.getCenter = function () {
+      return this._center;
+    }
+
+    return Cluster;
+  }
+  // ********************* 重写聚合点的类(end) ***************
+
+  // ********************* 自定义覆盖物类(start) ***************
+
+  /**
+   * @desc 生成自定义覆盖物的类
+   */
+  function createCustomOverlayClass() {
+    function CustomOverlay(map, point, html) {
+      this._map = map;
+      this._point = new BMap.Point(point[0], point[1]);
+      this._html = html;
+    }
+
+    CustomOverlay.prototype = new BMap.Overlay();
+
+    CustomOverlay.prototype.initialize = function() {
+      var div = this._div =  document.createElement("div");
+      div.style.position = "absolute";
+      div.style.zIndex = BMap.Overlay.getZIndex(this._point.lat);
+      div.style.minWidth = "20px";
+      div.style.minHeight = "20px";
+      div.innerHTML = this._html;
+
+      this._map.getPanes().floatPane.appendChild(div);
+
+      this._map.addEventListener('zoomend', this.draw.bind(this));
+
+      return div;
+    }
+
+    CustomOverlay.prototype.draw = function() {
+      var map = this._map;
+      var pixel = map.pointToOverlayPixel(this._point);
+      this._div.style.left = pixel.x + 10 +  "px";
+      this._div.style.top  = pixel.y - 10 + "px";
+    }
+
+    CustomOverlay.prototype.remove = function() {
+      this._div.parentElement.removeChild(this._div);
+    }
+
+    return CustomOverlay;
+  }
+
+  // ********************* 自定义覆盖物类(end) ***************
 
   //地图的类
   function MapClass() {
@@ -134,26 +435,31 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       label: null
     }; //保存圆形区域过滤的圆形，保证此圆形的唯一性
     this._markerCluster = null; //点聚合对象
+    this._CumtomOverlay = null; //自定义覆盖物类(在脚本加载完毕后初始化)
   }
 
   //地图脚本准备完毕之后的回调
-  MapClass.prototype._onScriptReady = function(callback) {
+  MapClass.prototype._onScriptReady = function (callback) {
     try {
-      _event.on('onScriptReady', callback); //执行插件内部的初始化函数
+      if (isScriptReady()) {
+        callback();
+      } else {
+        _event.on('onScriptReady', callback); //执行插件内部的初始化函数
+      }
     } catch (error) {
       throw error;
     }
   }
 
   //地图初始化完成的回调
-  MapClass.prototype.onReady = function(callback) {
-    _event.on('onReady', callback.bind(this)); //执行外部的回调
+  MapClass.prototype.onReady = function (callback) {
+    _event.on('ready', callback.bind(this)); //执行外部的回调
   }
 
   /**
    * @desc 地图的初始化方法
    */
-  MapClass.prototype._init = function() {
+  MapClass.prototype._init = function () {
     var el = this.container;
     var centerPoint = this.centerPoint;
     var zoom = this.zoomLevel;
@@ -166,7 +472,11 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this._defaultCursor = this._bmap.getDefaultCursor();
 
     this._bmap.centerAndZoom(new BMap.Point(centerPoint[0], centerPoint[1]), zoom);
+    var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_BOTTOM_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL});
+    this._bmap.addControl(top_right_navigation);
     // this._bmap.addControl(new BMap.NavigationControl());
+
+    this._CumtomOverlay = createCustomOverlayClass();
 
     if (this.markerClusterOptions && this.markerClusterOptions.enable) {
       //开启点聚合
@@ -178,7 +488,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     }
 
     this._drawManagerInit();
-    _event.emit('onReady');
+    _event.emit('ready');
   }
 
   /**
@@ -191,11 +501,11 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 自定义工具栏初始化
    */
-  MapClass.prototype._toolsInit = function() {
+  MapClass.prototype._toolsInit = function () {
     var div = document.createElement('div');
     div.className = "bhMap-tools";
     div.id = "bhMapTools";
-    div.oncontextmenu = function(e) {
+    div.oncontextmenu = function (e) {
       e.stopPropagation();
       e.preventDefault();
     };
@@ -233,7 +543,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 控制是否开启工具条，默认关闭
    */
-  MapClass.prototype.enableMapTools = function(flag, options) {
+  MapClass.prototype.enableMapTools = function (flag, options) {
     var toolsEle = document.getElementById('bhMapTools');
     if (flag) {
       //开启工具条
@@ -257,7 +567,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 工具条的配置
    */
-  MapClass.prototype.setMapTools = function(options) {
+  MapClass.prototype.setMapTools = function (options) {
     if (!options) {
       throw new Error('工具条的设置参数错误');
     }
@@ -273,26 +583,26 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 自定义工具条上按钮的事件初始化
    */
-  MapClass.prototype._toolsEventInit = function() {
+  MapClass.prototype._toolsEventInit = function () {
     var that = this;
     var polylineBtn = document.getElementById("bhMapToolsPolyline");
     var circleFilterBtn = document.getElementById("bhMapToolsArea");
     var rangingBtn = document.getElementById("bhMapToolsRanging");
     var markBtn = document.getElementById("bhMapToolsMark");
     var moveBtn = document.getElementById("bhMapToolsMove");
-    polylineBtn.addEventListener('click', function() {
+    polylineBtn.addEventListener('click', function () {
       that.enableDrawPolyLine();
     });
-    circleFilterBtn.addEventListener('click', function() {
+    circleFilterBtn.addEventListener('click', function () {
       that.enableCircleFilter();
     });
-    rangingBtn.addEventListener('click', function() {
+    rangingBtn.addEventListener('click', function () {
       that.enableRanging();
     });
-    markBtn.addEventListener('click', function() {
+    markBtn.addEventListener('click', function () {
       that.enableMark();
     });
-    moveBtn.addEventListener('click', function() {
+    moveBtn.addEventListener('click', function () {
       that._drawingManagerObject.close();
     });
   }
@@ -300,7 +610,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 鼠标绘制工具初始化
    */
-  MapClass.prototype._drawManagerInit = function() {
+  MapClass.prototype._drawManagerInit = function () {
     var that = this;
     //实例化鼠标绘制对象
     this._drawingManagerObject = new BMapLib.DrawingManager(this._bmap, {
@@ -317,19 +627,19 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       polylineOptions: this._polylineOptions
     });
 
-    this._drawingManagerObject.addEventListener("polylinecomplete", function(overlay) {
+    this._drawingManagerObject.addEventListener("polylinecomplete", function (overlay) {
       //画线完成后的回调
       that._drawingManagerObject.close();
       var pointArr = overlay.getPath();
       var pois = [];
       that._bmap.removeOverlay(overlay);
-      pointArr.forEach(function(current) {
+      pointArr.forEach(function (current) {
         pois.push(new BMap.Point(current.lng, current.lat));
       });
       var polyline = new BMap.Polyline(pois, that._polylineOptions);
       that._bmap.addOverlay(polyline);
       //创建右键菜单
-      var removePolyline = function(e, ee, polyline) {
+      var removePolyline = function (e, ee, polyline) {
         that._bmap.removeOverlay(polyline);
       };
       var polylineMenu = new BMap.ContextMenu();
@@ -338,12 +648,20 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       );
       polyline.addContextMenu(polylineMenu);
     });
+
+    this._drawingManagerObject.addEventListener("markercomplete", function(e, marker) {
+      _event.emit("markercomplete", marker);
+    });
+
+    this._drawingManagerObject.addEventListener("polylinecomplete", function(polyline) {
+      _event.emit("polylinecomplete", polyline);
+    });
   }
 
   /**
    * @desc 开启折线的绘制
    */
-  MapClass.prototype.enableDrawPolyLine = function() {
+  MapClass.prototype.enableDrawPolyLine = function () {
     this._drawingManagerObject.open();
     this._drawingManagerObject.setDrawingMode(BMAP_DRAWING_POLYLINE);
   }
@@ -351,7 +669,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 开启圆形区域过滤
    */
-  MapClass.prototype.enableCircleFilter = function() {
+  MapClass.prototype.enableCircleFilter = function () {
     var that = this;
     this._bmap.enableDragging();
     this._bmap.enableScrollWheelZoom();
@@ -361,14 +679,14 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
 
     this._bmap.removeOverlay(this._filterCircle.label);
     this._bmap.removeOverlay(this._filterCircle.circle);
-    this._bmap.getOverlays().map(function(item) {
+    this._bmap.getOverlays().map(function (item) {
       item.show();
     });
 
     var myLabel = new BMap.Label();
     myLabel.setOffset(new BMap.Size(10, -6));
 
-    BMapLib.EventWrapper.addListenerOnce(this._drawingManagerObject, 'circlecomplete', function(e, circle) {
+    BMapLib.EventWrapper.addListenerOnce(this._drawingManagerObject, 'circlecomplete', function (e, circle) {
       that._filterCircle.circle = circle;
       var radius = circle.getRadius();
       var r = radius.toFixed(2);
@@ -376,7 +694,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       // 控制圆内的点
       var overlays = that._bmap.getOverlays();
       // vm.circle = overlays;
-      overlays.map(function(item) {
+      overlays.map(function (item) {
         var point = item.point;
         if (item instanceof BMapLib.TextIconOverlay) {
           point = item._position;
@@ -411,10 +729,10 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       var zoomEnd = BMapLib.EventWrapper.addListener(that._bmap, 'zoomend', that._reFilter.bind(that));
 
       //圆形区域删除后删除事件
-      circle.addEventListener("remove", function() {
+      circle.addEventListener("remove", function () {
         that._filterCircle.circle = null;
         that._filterCircle.label = null;
-        that._bmap.getOverlays().map(function(item) {
+        that._bmap.getOverlays().map(function (item) {
           item.show();
         });
         BMapLib.EventWrapper.removeListener(moveEnd);
@@ -422,7 +740,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       });
 
       //创建右键菜单
-      var removeCircle = function(e, ee, circle) {
+      var removeCircle = function (e, ee, circle) {
         circle.disableEditing();
         that._bmap.removeOverlay(circle);
         that._bmap.removeOverlay(myLabel);
@@ -443,7 +761,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 重新对标点或聚合点进行过滤
    */
-  MapClass.prototype._reFilter = function() {
+  MapClass.prototype._reFilter = function () {
     var that = this;
     try {
       var circle = this._filterCircle.circle;
@@ -457,7 +775,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       myLabel.setPosition(point);
 
       var overlays = this._bmap.getOverlays();
-      overlays.map(function(item) {
+      overlays.map(function (item) {
         var overlaysPoint = item.point;
         if (item instanceof BMapLib.TextIconOverlay) {
           overlaysPoint = item._position;
@@ -470,14 +788,13 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         }
       });
       myLabel.show();
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   /**
    * @desc 开启测距功能
    */
-  MapClass.prototype.enableRanging = function() {
+  MapClass.prototype.enableRanging = function () {
     this._drawingManagerObject.close();
     var myDis = new BMapLib.DistanceTool(this._bmap);
     myDis.open(); //开启鼠标测距
@@ -486,7 +803,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 开启标点功能
    */
-  MapClass.prototype.enableMark = function() {
+  MapClass.prototype.enableMark = function () {
     this._drawingManagerObject.open();
     this._drawingManagerObject.setDrawingMode(BMAP_DRAWING_MARKER);
   }
@@ -498,11 +815,11 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    */
 
   /**
-  * @desc 创建标记
-  * @param {Object} point {id: '1', title: 'title', lng: '111', lat: '111'}
-  * @returns {Object} Marker值
-  */
-  MapClass.prototype.createMarker = function(point) {
+   * @desc 创建标记
+   * @param {Object} point {id: '1', title: 'title', lng: '111', lat: '111'}
+   * @returns {Object} Marker值
+   */
+  MapClass.prototype.createMarker = function (point) {
     if (!point || point.id === undefined || point.id === null) {
       throw new Error('创建标记的参数不正确');
     }
@@ -518,7 +835,9 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       var width = setDefaultValue(point.icon.width, 19);
       var height = setDefaultValue(point.icon.height, 25);
       var icon = new BMap.Icon(point.icon.url, new BMap.Size(width, height));
-      marker = new BMap.Marker(pt, { icon: icon });
+      marker = new BMap.Marker(pt, {
+        icon: icon
+      });
       labelFlag && titleLabel.setOffset(new BMap.Size(0, height));
     } else {
       marker = new BMap.Marker(pt);
@@ -543,7 +862,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * @param {Object} line {list: [{lng: 116, lat:39}], options: {strokeColor: "#333", strokeWeight: '8', strokeOpacity: 0.8}}
    * @returns {Object} polyline值
    */
-  MapClass.prototype.createPolyline = function(line) {
+  MapClass.prototype.createPolyline = function (line) {
     var pois = [];
     var color, weight, opacity;
     try {
@@ -555,7 +874,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       weight = '8';
       opacity = 0.8
     }
-    line.list.forEach(function(current) {
+    line.list.forEach(function (current) {
       pois.push(new BMap.Point(current.lng, current.lat));
     });
     var polyline = new BMap.Polyline(pois, {
@@ -573,7 +892,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * @desc 开启点聚合功能
    * @param {Object} options {markers: [], gridSize: 60, maxZoom: 5, minClusterSize: 2, isAverangeCenter: false, styles: []}
    */
-  MapClass.prototype._enableMarkerCluster = function(options) {
+  MapClass.prototype._enableMarkerCluster = function (options) {
     !options && (options = {});
     if (!BMapLib || !BMapLib.MarkerClusterer) {
       throw new Error("缺少MarkerClusterer的js文件");
@@ -581,13 +900,140 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     if (!BMapLib || !BMapLib.TextIconOverlay) {
       throw new Error("缺少TextIconOverlay的js文件");
     }
+
+    //设置默认值
+    this.markerClusterOptions.clickExpand = setDefaultValue(this.markerClusterOptions.clickExpand, true);
+
+    if (!this.markerClusterOptions.clickExpand) {
+      this._rewriteTextIconOverlay();
+      var Cluster = rewriteCluster();
+      this._rewriteMarkerClusterer(Cluster);
+    }
     this._markerCluster = new BMapLib.MarkerClusterer(this._bmap, options);
   }
 
+  // ************* 聚合点定制化(start) ***************
+
+  /**
+   * @desc 重写TextIconOverlay类的原型上的一些方法，从而实现特殊需求
+   */
+  MapClass.prototype._rewriteTextIconOverlay = function () {
+    try {
+      var TextIconOverlay = BMapLib.TextIconOverlay;
+      TextIconOverlay.prototype.getStyleByText = function (text, styles) {
+        return styles[this._options.clusterImageIndex];
+      }
+
+      TextIconOverlay.prototype.setImageIndex = function(index) {
+        this._options.clusterImageIndex = index;
+        this._updateText();
+        this._updateCss();
+        this._updatePosition();
+      }
+    } catch (error) {}
+  }
+
+  /**
+   * @desc 重写MarkerClusterer类的原型上的一些方法
+   */
+  MapClass.prototype._rewriteMarkerClusterer = function (Cluster) {
+    try {
+      var MarkerClusterer = BMapLib.MarkerClusterer;
+
+      /**
+       * 根据标记的位置，把它添加到最近的聚合中
+       * @param {BMap.Marker} marker 要进行聚合的单个标记
+       *
+       * @return 无返回值。
+       */
+      MarkerClusterer.prototype._addToClosestCluster = function (marker) {
+        var distance = 4000000;
+        var clusterToAddTo = null;
+        for (var i = 0, cluster; cluster = this._clusters[i]; i++) {
+          var center = cluster.getCenter();
+          if (center) {
+            var d = this._map.getDistance(center, marker.getPosition());
+            if (d < distance) {
+              distance = d;
+              clusterToAddTo = cluster;
+            }
+          }
+          (function (cluster) {
+            cluster._clusterMarker.onclick = function (e) { //在每个聚合点对象的视图对象上绑定事件
+              //这样就可以为每一个聚合点绑定点击事件了
+              _event.emit('clusterClick', cluster);
+            };
+          })(cluster);
+        }
+
+        if (clusterToAddTo && clusterToAddTo.isMarkerInClusterBounds(marker)) {
+          clusterToAddTo.addMarker(marker);
+        } else {
+          var cluster = new Cluster(this);
+          cluster.addMarker(marker);
+          this._clusters.push(cluster);
+        }
+      };
+
+      /**
+       * 重新生成，比如改变了属性等
+       * @return 无返回值
+       */
+      MarkerClusterer.prototype._redraw = function () {
+        this._clearLastClusters();
+        this._createClusters();
+        for (var i = 0, cluster; cluster = this._clusters[i]; i++) { //遍历所有的聚合点对象
+          (function (cluster) {
+            cluster._clusterMarker.onclick = function (e) { //在每个聚合点对象的视图对象上绑定事件
+              //这样就可以为每一个聚合点绑定点击事件了
+              _event.emit('clusterClick', cluster);
+            };
+          })(cluster);
+        }
+      };
+    } catch (error) {}
+  }
+
+  /**
+   * @desc 聚合点的点击事件
+   */
+  MapClass.prototype.onClusterClick = function(callback) {
+    _event.on('clusterClick', callback);
+  }
+  // ************* 聚合点定制化(end) ***************
+
+  /**
+   * @desc 创建自定义覆盖物
+   */
+  MapClass.prototype.createCustomOverlay = function(point, html) {
+    var customOverlay = new this._CumtomOverlay(this._bmap, point, html);
+    this._bmap.addOverlay(customOverlay);
+    return customOverlay;
+  }
+
+  /**
+   * @desc 自定义事件
+   * @param {String} e 事件名称
+   * @param {Function} callback 事件触发的回调函数
+   * @returns void
+   */
+  MapClass.prototype.addEventListener = function(e, callback) {
+    _event.on(e, callback);
+  }
+
+  /**
+   * @desc 解除事件绑定
+   * @param {String} e 事件名称
+   * @param {Function} callback 要解绑的事件回调函数
+   *@return void
+   */
+  MapClass.prototype.removeEventListener = function(e, callback) {
+    _event.off(e, callback);
+  }
   /**
    * @desc 渲染地图
    */
-  MapClass.prototype._render = function(options) {
+  MapClass.prototype._render = function (options) {
     if (options === undefined || options === null) {
       options = {};
     }
@@ -603,6 +1049,33 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
 
     this._onScriptReady(this._init.bind(this));
 
+  }
+
+
+  /**
+   * @desc 加载地图的主脚本
+   * @param {Object} options 加载在线地图还是离线地图
+   * @param {Array} toolsList 加载地图的工具库脚本
+   */
+  function loadMapMainScript(options, toolsList) {
+    loadToolsScript(toolsList); //加载工具脚本
+    if (options.isOnline) {
+      window.BMap_loadScriptTime = (new Date).getTime();
+      dom.loadScript('http://api.map.baidu.com/getscript?v=2.0&ak=' + options.ak, function () {
+        BMapScriptLoaded = true;
+        _event.emit('mapMainScriptLoaded'); //加载工具脚本
+      });
+    } else {
+      if (options.sourceRoot === undefined) {
+        throw new Error("离线地图需要传入sourceRoot");
+      }
+      window.mapSourceRoot = options.sourceRoot;
+      dom.loadScript(options.sourceRoot + '/map_load.js', function () {
+        BMapScriptLoaded = true;
+        _event.emit('mapMainScriptLoaded'); //加载工具脚本
+      });
+    }
+
     // 等待地图脚本都准备完毕
     (function loop() {
       if (isScriptReady()) {
@@ -613,43 +1086,17 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     })();
   }
 
-
-  /**
-   * @desc 加载地图的主脚本
-   * @param {Object} options 加载在线地图还是离线地图
-   * @param {Array} toolsList 加载地图的工具库脚本
-   */
-  function loadMapMainScript (options, toolsList) {
-    loadToolsScript(toolsList); //加载工具脚本
-    if (options.isOnline) {
-      window.BMap_loadScriptTime = (new Date).getTime();
-      dom.loadScript('http://api.map.baidu.com/getscript?v=2.0&ak='+options.ak, function() {
-        BMapScriptLoaded = true;
-        _event.emit('mapMainScriptLoaded'); //加载工具脚本
-      });
-    } else {
-      if (options.sourceRoot === undefined) {
-        throw new Error("离线地图需要传入sourceRoot");
-      }
-      window.mapSourceRoot = options.sourceRoot;
-      dom.loadScript(options.sourceRoot+'/map_load.js', function() {
-        BMapScriptLoaded = true;
-        _event.emit('mapMainScriptLoaded'); //加载工具脚本
-      });
-    }
-  }
-
   /**
    * @desc 导入地图工具(依赖地图主脚本)的脚本
    * @param {Array} urlList
    */
-  function loadToolsScript (urlList) {
-    _event.on('mapMainScriptLoaded', function() {
+  function loadToolsScript(urlList) {
+    _event.on('mapMainScriptLoaded', function () {
       for (var i = 0, len = urlList.length; i < len; i++) {
         var current = urlList[i];
         BMapToolsScriptLoaded[current] = false;
-        (function(current) {
-          dom.loadScript(current, function() {
+        (function (current) {
+          dom.loadScript(current, function () {
             BMapToolsScriptLoaded[current] = true;
           });
         })(current);
@@ -679,7 +1126,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   function init() {
     //插件初始化
     map.loadScript = loadMapMainScript;
-    map.render = function(options) {
+    map.render = function (options) {
       var _innerMap = new MapClass();
       try {
         _innerMap._render(options);
@@ -688,6 +1135,9 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       }
       return _innerMap;
     };
+    map.onAllScriptLoaded = function(callback) {
+      _event.on('onScriptReady', callback);
+    }
   }
   init();
 
