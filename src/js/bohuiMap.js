@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-04 17:21:06
+ * @Last Modified time: 2019-03-06 18:53:56
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -12,7 +12,8 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   var map = bhLib.map = bhLib.map || {};
   var BMapScriptLoaded = false; //百度地图的主脚本是否加载完毕
   var BMapToolsScriptLoaded = {}; //百度地图工具脚本是否加载完毕
-  var _event = new Event(); //事件实例
+  var _event = map._event = new Event(); //事件实例
+  var isOnline = true;
 
   //获取正在执行的js路径
   var scripts = document.getElementsByTagName("script");
@@ -113,6 +114,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    */
   Event.prototype.emit = function (e) {
     try {
+      if (!this._eventMap[e]) return;
       var temp = Array.prototype.slice.call(arguments, 1);
       for (var i = 0, handle; handle = this._eventMap[e][i]; i++) {
         // handle();
@@ -417,7 +419,6 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   //地图的类
   function MapClass() {
     this.container = null; //初始化地图的DOM元素
-    this.isOnline = true; //初始化的是离线地图还是在线地图
     this.centerPoint = null; //初始化地图的中心点
     this.zoomLevel = 1; //初始化地图的缩放级别
     this.maxZoom = 19; //地图的最大缩放级别
@@ -459,13 +460,17 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
 
   //地图初始化完成的回调
   MapClass.prototype.onReady = function (callback) {
-    _event.on('ready', callback.bind(this)); //执行外部的回调
+    if (this._bmap) {
+      callback.call(this);
+    } else {
+      _event.on('ready', callback.bind(this)); //执行外部的回调
+    }
   }
 
   /**
    * @desc 地图的初始化方法
    */
-  MapClass.prototype._init = function (isOnline) {
+  MapClass.prototype._init = function () {
     var el = this.container;
     var centerPoint = this.centerPoint;
     var zoom = this.zoomLevel;
@@ -476,7 +481,6 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this.enableScrollWheelZoom = this._bmap.enableScrollWheelZoom.bind(this._bmap);
     this.enableKeyboard = this._bmap.enableKeyboard.bind(this._bmap);
     this._defaultCursor = this._bmap.getDefaultCursor();
-    this.isOnline = isOnline;
 
     this._bmap.centerAndZoom(new BMap.Point(centerPoint[0], centerPoint[1]), zoom);
     // var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_BOTTOM_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL});
@@ -497,6 +501,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this._drawManagerInit();
     this._navigationControlInit();
     _event.emit('ready');
+    _event.clean('ready');
   }
 
   /**
@@ -1066,7 +1071,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * @returns void
    */
   MapClass.prototype.changeMapStyle = function(str) {
-    if (this.isOnline) {
+    if (isOnline) {
       this._bmap.setMapStyle({style: str});
     } else {
       var tileLayer = new BMap.TileLayer(); //创建一个地图图层实例
@@ -1160,11 +1165,11 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         })();
       });
     }
-
+    isOnline = options.isOnline;
     // 等待地图脚本都准备完毕
     (function loop() {
       if (isScriptReady()) {
-        _event.emit('onScriptReady', options.isOnline);
+        _event.emit('onScriptReady');
         return;
       }
       setTimeout(loop, 300);
