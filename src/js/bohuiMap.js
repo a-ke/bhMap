@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-06 18:53:56
+ * @Last Modified time: 2019-03-08 11:17:08
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -254,7 +254,9 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         return true;
       } else if (len === this._minClusterSize) {
         for (var i = 0; i < len; i++) {
+          var tmplabel = this._markers[i].getLabel();
           this._markers[i].getMap() && this._map.removeOverlay(this._markers[i]);
+          this._markers[i].setLabel(tmplabel);
         }
 
       }
@@ -335,7 +337,9 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
      */
     Cluster.prototype.remove = function () {
       for (var i = 0, m; m = this._markers[i]; i++) {
+        var tmplabel = this._markers[i].getLabel();
         this._markers[i].getMap() && this._map.removeOverlay(this._markers[i]);
+        this._markers[i].setLabel(tmplabel);
       } //清除散的标记点
       this._map.removeOverlay(this._clusterMarker);
       this._markers.length = 0;
@@ -963,6 +967,21 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     //设置默认值
     this.markerClusterOptions.clickExpand = setDefaultValue(this.markerClusterOptions.clickExpand, true);
 
+    var styles = options.styles;
+    if (isArray(styles)) {
+      for (var i = 0, current; current = styles[i]; i++) {
+        if (isArray(current.size) && current.size.length === 2) {
+          current.size = new BMap.Size(current.size[0], current.size[1]);
+        }
+        if (isArray(current.anchor) && current.anchor.length === 2) {
+          current.anchor = new BMap.Size(current.anchor[0], current.anchor[1]);
+        }
+        if (isArray(current.offset) && current.offset.length === 2) {
+          current.offset = new BMap.Size(current.offset[0], current.offset[1]);
+        }
+      }
+    }
+
     if (!this.markerClusterOptions.clickExpand) {
       this._rewriteTextIconOverlay();
       var Cluster = rewriteCluster();
@@ -1050,6 +1069,30 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
           })(cluster);
         }
       };
+
+      MarkerClusterer.prototype._removeMarkersFromMap = function () {
+        for (var i = 0,
+          marker; marker = this._markers[i]; i++) {
+          marker.isInCluster = false;
+          var tmplabel = marker.getLabel();
+          this._map.removeOverlay(marker);
+          marker.setLabel(tmplabel)
+        }
+      };
+
+      MarkerClusterer.prototype._removeMarker = function (marker) {
+        var index = indexOf(marker, this._markers);
+        if (index === -1) {
+          return false
+        }
+        var tmplabel = marker.getLabel();
+        this._map.removeOverlay(marker);
+        marker.setLabel(tmplabel);
+        this._markers.splice(index, 1);
+        return true
+      };
+
+
     } catch (error) {}
   }
 
