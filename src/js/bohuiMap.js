@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-08 11:17:08
+ * @Last Modified time: 2019-03-08 16:24:53
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -1146,6 +1146,22 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    */
   MapClass.prototype.removeEventListener = function(e, callback) {
     _event.off(e, callback);
+  }
+
+  /**
+   * 清空地图上的标记
+   * @returns void
+   */
+  MapClass.prototype.clearMarkers = function() {
+    if (this._markerCluster) {
+      this._markerCluster.clearMarkers();
+    } else {
+      for (var key in this.markerMap) {
+        this._bmap.removeOverlay(this.markerMap[key]);
+      }
+    }
+    this.markerMap = {};
+    this.markerPointArr = [];
   }
   /**
    * @desc 渲染地图
