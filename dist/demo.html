@@ -99,15 +99,18 @@
         this.createMarker({
           id: i,
           lng: Math.random() * 40 + 85,
-          lat: Math.random() * 30 + 21
+          lat: Math.random() * 30 + 21,
+          label: {
+            content: '测试' + i
+          }
         }).clusterImageIndex = 0;
       }
 
-      setTimeout(function() {
-        map.markerMap[0].clusterImageIndex = 2;
-        map.markerMap[1].clusterImageIndex = 1;
-        map._markerCluster._redraw();
-      }, 3000);
+      // setTimeout(function() {
+      //   map.markerMap[0].clusterImageIndex = 2;
+      //   map.markerMap[1].clusterImageIndex = 1;
+      //   map._markerCluster._redraw();
+      // }, 3000);
 
       this.createPolyline({
         list: [{lng: 116.296778, lat: 39.951073}, {lng: 116.377266, lat: 39.941337}, {lng: 116.358294, lat: 39.888431}],
