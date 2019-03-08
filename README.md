@@ -73,7 +73,14 @@ gridSize {Number} 聚合计算时网格的像素大小，默认60<br/>
 maxZoom {Number} 最大的聚合级别，大于该级别就不进行相应的聚合<br/>
 minClusterSize {Number} 最小的聚合数量，小于该数量的不能成为一个聚合，默认为2<br/>
 isAverangeCenter {Boolean} 聚合点的落脚位置是否是所有聚合在内点的平均值，默认为否，落脚在聚合内的第一个点<br/>
-styles {Array} 自定义聚合后的图标风格，请参考TextIconOverlay类
+styles {Array} 自定义聚合后的图标风格。单个图标风格包括以下几个属性：<br/>
+
+  url	{String}	图片的url地址。(必选)<br>
+  size {Array}	图片的大小。[10, 20]，第一个值为width，第二个值为height（必选）<br>
+  anchor {Array} 图标定位在地图上的位置相对于图标左上角的偏移值，默认偏移值为图标的中心位置。[10, 20]，第一个值为left，第二个值为top（可选）<br>
+  offset {Array} 图片相对于可视区域的偏移值，此功能的作用等同于CSS中的background-position属性。[10, 20]，第一个值为left，第二个值为top（可选）<br>
+  textSize {Number} 文字的大小。（可选，默认10）<br>
+  textColor {String} 文字的颜色。（可选，默认black）
 
 **返回值是地图的实例化对象，比如叫：myMap**
 
