@@ -9,15 +9,18 @@
   box-shadow: 0px 0px 2px 1px #aaa;
   z-index: 2;
 }
+
 .bhMap-tools span {
   display: inline-block;
   padding: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
+
 .bhMap-tools span:hover {
   color: #1e70ad;
 }
+
 .bhMap-tools span i {
   margin-right: 5px;
   font-size: 24px;
@@ -39,13 +42,23 @@
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.bhMap-navigation span + span {
+
+.bhMap-navigation span+span {
   border-top: 1px solid #999;
 }
 
 .bhMap-navigation span:hover {
   color: #1e70ad;
 }
+
 .bhMap-navigation span i {
   font-size: 24px;
+}
+
+.BMap_cpyCtrl {
+  display: none;
+}
+
+.anchorBL {
+  display: none;
 }
