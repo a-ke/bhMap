@@ -311,3 +311,9 @@ param | String | 皮肤名称或皮肤路径（详情见下方说明）| 是 | -
 }
 ```
 - 当地图为离线地图时，该参数为皮肤瓦片的目录名称，比如离线资源根目录下的tiles_self文件夹，即可传入 'tiles_self'。
+
+### 16. clearMarkers()
+清空地图上的所有标点
+```js
+myMap.clearMarkers();
+```
