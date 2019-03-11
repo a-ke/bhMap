@@ -317,3 +317,12 @@ param | String | 皮肤名称或皮肤路径（详情见下方说明）| 是 | -
 ```js
 myMap.clearMarkers();
 ```
+
+### 17. getMarkerById(id)
+根据创建标点时所使用的id来获取相应的marker
+
+参数 | 类型 | 说明 | 必选 | 默认值
+-- | -- | -- | -- | --
+id | String或Number | marker点的唯一标识 | 是 | -
+
+返回值：Marker

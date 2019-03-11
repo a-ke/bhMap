@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-08 16:24:53
+ * @Last Modified time: 2019-03-11 10:43:30
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -434,7 +434,6 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this.markerClusterOptions = null; //点聚合的配置项
 
     this._bmap = null; //百度地图实例化对象
-    this._defaultCursor = null; //地图的默认鼠标样式
     this._drawingManagerObject = null; //鼠标绘制库实例化对象
     this._polylineOptions = {
       strokeColor: "#333",
@@ -484,7 +483,6 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this._bmap.setMinZoom(this.minZoom);
     this.enableScrollWheelZoom = this._bmap.enableScrollWheelZoom.bind(this._bmap);
     this.enableKeyboard = this._bmap.enableKeyboard.bind(this._bmap);
-    this._defaultCursor = this._bmap.getDefaultCursor();
 
     this._bmap.centerAndZoom(new BMap.Point(centerPoint[0], centerPoint[1]), zoom);
     // var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_BOTTOM_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL});
@@ -1162,6 +1160,14 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     }
     this.markerMap = {};
     this.markerPointArr = [];
+  }
+
+  /**
+   * 根据创建标点时所传入的id来获取marker
+   * @returns Marker
+   */
+  MapClass.prototype.getMarkerById = function(id) {
+    return this.markerMap[id];
   }
   /**
    * @desc 渲染地图
