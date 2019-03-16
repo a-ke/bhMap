@@ -218,8 +218,10 @@ myMap.markerMap[0].clusterImageIndex = 2;
 myMap._markerCluster._redraw();
 ```
 
-### 12. myMap.createCustomOverlay(point, html, offset)
+### 12. myMap.createCustomOverlay(point, html, offset, zIndex)
 创建地图自定义覆盖物
+
+*zIndex的设置是在原有基础上增加zIndex\*1000000，默认的层级与覆盖物的经度有关*
 
 参数 | 类型 | 说明 | 必选 | 默认值
 -- | -- | -- | -- | --
@@ -231,6 +233,7 @@ offset | Object | 覆盖物的偏移 |
 offset.top | Number | 向上偏移(单位: px) | 否 | -20
 offset.left | Number | 向左偏移(单位: px) | 否 | 0
 offset.transform | String | 变换(跟css的transform相同) | 否 | 'translate(-50%, -100%)'
+zIndex | Number | 覆盖物的层级设置 | 否 | 0
 
 返回值：自定义覆盖物对象，该对象上提供一个remove()方法，可以通过该方法删除该覆盖物。同时该对象继承于[Overlay类](http://lbsyun.baidu.com/cms/jsapi/reference/jsapi_reference.html#a3b0)，具备Overlay上的一切方法。
 
