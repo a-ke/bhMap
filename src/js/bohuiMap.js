@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-11 10:43:30
+ * @Last Modified time: 2019-03-16 12:44:27
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -376,11 +376,12 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
    * @desc 生成自定义覆盖物的类
    */
   function createCustomOverlayClass() {
-    function CustomOverlay(map, point, html, offset) {
+    function CustomOverlay(map, point, html, offset, zIndex) {
       this._map = map;
       this._point = new BMap.Point(point[0], point[1]);
       this._html = html;
       this._offset = offset || {};
+      this.zIndex = zIndex || 0;
     }
 
     CustomOverlay.prototype = new BMap.Overlay();
@@ -406,6 +407,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       var left = setDefaultValue(this._offset.left, 0);
       var top = setDefaultValue(this._offset.top, -20);
       var transform = setDefaultValue(this._offset.transform, 'translate(-50%, -100%)');
+      this._div.style.zIndex = BMap.Overlay.getZIndex(this._point.lat) + this.zIndex * 1000000;
       this._div.style.left = pixel.x + left + "px";
       this._div.style.top = pixel.y + top + "px";
       this._div.style.transform = transform;
@@ -1038,6 +1040,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
             cluster._clusterMarker.onclick = function (e) { //在每个聚合点对象的视图对象上绑定事件
               //这样就可以为每一个聚合点绑定点击事件了
               _event.emit('clusterClick', cluster);
+              return false;
             };
           })(cluster);
         }
@@ -1063,6 +1066,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
             cluster._clusterMarker.onclick = function (e) { //在每个聚合点对象的视图对象上绑定事件
               //这样就可以为每一个聚合点绑定点击事件了
               _event.emit('clusterClick', cluster);
+              return false;
             };
           })(cluster);
         }
@@ -1099,8 +1103,8 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
   /**
    * @desc 创建自定义覆盖物
    */
-  MapClass.prototype.createCustomOverlay = function(point, html, offset) {
-    var customOverlay = new this._CumtomOverlay(this._bmap, point, html, offset);
+  MapClass.prototype.createCustomOverlay = function(point, html, offset, zIndex) {
+    var customOverlay = new this._CumtomOverlay(this._bmap, point, html, offset, zIndex);
     this._bmap.addOverlay(customOverlay);
     return customOverlay;
   }
