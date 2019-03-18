@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-16 12:44:27
+ * @Last Modified time: 2019-03-18 15:33:00
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -429,8 +429,6 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this.zoomLevel = 1; //初始化地图的缩放级别
     this.maxZoom = 19; //地图的最大缩放级别
     this.minZoom = 1; //地图的最小缩放级别
-    this.enableScrollWheelZoom = null; //控制是否开启滚轮缩放的方法
-    this.enableKeyboard = null; //控制是否开启键盘操作的方法
     this.markerMap = {}; //地图中所有的标注点的集合
     this.markerPointArr = []; //地图上所有的标注点的point数组
     this.markerClusterOptions = null; //点聚合的配置项
@@ -483,8 +481,6 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this._bmap = new BMap.Map(el);
     this._bmap.setMaxZoom(this.maxZoom);
     this._bmap.setMinZoom(this.minZoom);
-    this.enableScrollWheelZoom = this._bmap.enableScrollWheelZoom.bind(this._bmap);
-    this.enableKeyboard = this._bmap.enableKeyboard.bind(this._bmap);
 
     this._bmap.centerAndZoom(new BMap.Point(centerPoint[0], centerPoint[1]), zoom);
     // var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_BOTTOM_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL});
