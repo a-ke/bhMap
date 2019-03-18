@@ -65,7 +65,7 @@
     map.onReady(function() {
       console.log('ready')
       // console.log(this)
-      this.enableScrollWheelZoom(true);
+      this._bmap.disableScrollWheelZoom();
       this.enableKeyboard(true);
       this.enableMapTools(true, {
         polylineOptions: {

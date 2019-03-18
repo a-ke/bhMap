@@ -105,21 +105,7 @@ var myMap = bhLib.map.render({
 -- | -- | -- | -- | --
 callback | Function | 地图初始化完成后的回调函数 | 是 | -
 
-### 5. myMap.enableScrollWheelZoom(flag)
-控制是否开启鼠标滚轮缩放
-
-参数 | 类型 | 说明 | 必选 | 默认值
--- | -- | -- | -- | --
-flag | boolean | 是否开启鼠标滚轮操作地图缩放 | 否 | true
-
-### 6. myMap.enableKeyboard(flag)
-控制是否开启键盘操作（上、下、左、右来移动地图）
-
-参数 | 类型 | 说明 | 必选 | 默认值
--- | -- | -- | -- | --
-flag | boolean | 是否开启键盘操作 | 否 | true
-
-### 7. myMap.enableMapTools(flag, options)
+### 5. myMap.enableMapTools(flag, options)
 控制是否开启地图内置工具条，options是工具条的一些设置
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -140,12 +126,12 @@ myMap.enableMapTools(true, {
 });
 ```
 
-### 8. myMap.setMapTools(options)
+### 6. myMap.setMapTools(options)
 设置工具条上功能的配置
 
 参数说明同 enableMapTools(flag, options) 方法中的options一样。
 
-### 9. myMap.createMarker(param)
+### 7. myMap.createMarker(param)
 创建标记点
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -182,7 +168,7 @@ myMap.createMarker({
 });
 ```
 
-### 10. myMap.createPolyline(line)
+### 8. myMap.createPolyline(line)
 创建折线
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -207,7 +193,7 @@ myMap.createPolyline({
 });
 ```
 
-### 11. 替换聚合点图片的方式说明
+### 9. 替换聚合点图片的方式说明
 > 因为聚合点在地图移动和缩放时会进行重绘，所以聚合点的图片只能通过其所有的marker点来计算。
 * 首先一定要将clickExpand属性设为false
 * 其次要设置聚合的options中的styles参数，如果不设置则styles数组中为默认图片
@@ -218,7 +204,7 @@ myMap.markerMap[0].clusterImageIndex = 2;
 myMap._markerCluster._redraw();
 ```
 
-### 12. myMap.createCustomOverlay(point, html, offset, zIndex)
+### 10. myMap.createCustomOverlay(point, html, offset, zIndex)
 创建地图自定义覆盖物
 
 *zIndex的设置是在原有基础上增加zIndex\*1000000，默认的层级与覆盖物的经度有关*
@@ -237,7 +223,7 @@ zIndex | Number | 覆盖物的层级设置 | 否 | 0
 
 返回值：自定义覆盖物对象，该对象上提供一个remove()方法，可以通过该方法删除该覆盖物。同时该对象继承于[Overlay类](http://lbsyun.baidu.com/cms/jsapi/reference/jsapi_reference.html#a3b0)，具备Overlay上的一切方法。
 
-### 13. myMap.addEventListener(event, callback)
+### 11. myMap.addEventListener(event, callback)
 添加事件监听函数
 
 事件 | 参数 | 描述
@@ -246,10 +232,10 @@ clusterClick | cluster | 开启点聚合功能并且关闭点击展开，点击�
 markercomplete | marker | 工具条上绘制标点完成的回调函数
 polylinecomplete | polyline | 工具条上绘制折线完成的回调函数
 
-### 14. myMap.removeEventListener(event, callback)
+### 12. myMap.removeEventListener(event, callback)
 移除某个事件监听函数
 
-### 15. myMap.changeMapStyle(param)
+### 13. myMap.changeMapStyle(param)
 更换地图皮肤
 
 参数 | 类型 | 说明 | 必选 | 默认值
@@ -315,13 +301,13 @@ param | String | 皮肤名称或皮肤路径（详情见下方说明）| 是 | -
 ```
 - 当地图为离线地图时，该参数为皮肤瓦片的目录名称，比如离线资源根目录下的tiles_self文件夹，即可传入 'tiles_self'。
 
-### 16. clearMarkers()
+### 14. clearMarkers()
 清空地图上的所有标点
 ```js
 myMap.clearMarkers();
 ```
 
-### 17. getMarkerById(id)
+### 15. getMarkerById(id)
 根据创建标点时所使用的id来获取相应的marker
 
 参数 | 类型 | 说明 | 必选 | 默认值
