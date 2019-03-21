@@ -2,7 +2,7 @@
  * @Author: a-ke
  * @Date: 2019-02-22 17:25:41
  * @Last Modified by: a-ke
- * @Last Modified time: 2019-03-18 15:33:00
+ * @Last Modified time: 2019-03-19 13:05:32
  * 插件说明：对百度地图进行了二次封装
  * 文档说明见项目根目录下的README.md文件
  */
@@ -730,7 +730,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
     this._bmap.removeOverlay(this._filterCircle.label);
     this._bmap.removeOverlay(this._filterCircle.circle);
     this._bmap.getOverlays().map(function (item) {
-      if (item instanceof BMap.Label) return;
+    //   if (item instanceof BMap.Label) return;
       item.show();
     });
 
@@ -747,12 +747,16 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
       // vm.circle = overlays;
       overlays.map(function (item) {
         var point = item.point;
+        console.log(item);
         if (item instanceof BMapLib.TextIconOverlay) {
           point = item._position;
         }
-        if (item instanceof BMap.Label) {
-          return;
+        if (item instanceof that._CumtomOverlay) {
+          point = item._point;
         }
+        // if (item instanceof BMap.Label) {
+        //   return;
+        // }
         var distance = that._bmap.getDistance(point, center);
         if (distance > radius) {
           item.hide();
@@ -787,7 +791,7 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         that._filterCircle.circle = null;
         that._filterCircle.label = null;
         that._bmap.getOverlays().map(function (item) {
-          if (item instanceof BMap.Label) return;
+          // if (item instanceof BMap.Label) return;
           item.show();
         });
         BMapLib.EventWrapper.removeListener(moveEnd);
@@ -835,8 +839,8 @@ var bhLib = window.bhLib = bhLib || {}; //创建命名空间
         if (item instanceof BMapLib.TextIconOverlay) {
           overlaysPoint = item._position;
         }
-        if (item instanceof BMap.Label) {
-          return;
+        if (item instanceof that._CumtomOverlay) {
+          overlaysPoint = item._point;
         }
         var distance = that._bmap.getDistance(overlaysPoint, center);
         if (distance > radius) {
